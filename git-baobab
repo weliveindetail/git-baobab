@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+
+import argparse
+import hashlib
+import os
+import os.path
+import time
+import re
+
+from git import *
+from datetime import datetime
+
+d3_header = """
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  path { stroke: #fff; }
+</style>
+<body>
+<script type="application/json" id="git-baobab-json">
+"""
+
+d3_footer = """
+</script>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var width = window.innerWidth - 50,
+    height = window.innerHeight - 50,
+    radius = 500;
+
+var color = d3.scale.category20c();
+
+var partition = d3.layout.partition()
+    .size([2 * Math.PI, radius])
+    .value(function(d) { return d.size; });
+
+var arc = d3.svg.arc()
+    .startAngle(function(d) { return d.x; })
+    .endAngle(function(d) { return d.x + d.dx; })
+    .innerRadius(function(d) { return d.y; })
+    .outerRadius(function(d) { return d.y + d.dy; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+var embedded_json = JSON.parse(document.getElementById("git-baobab-json").innerHTML)
+svg.data([embedded_json]).selectAll("path")
+      .data(partition.nodes)
+    .enter().append("path")
+      .attr("d", arc)
+      .style("fill", function(d) { 
+        return color((d.children ? d : d.parent).name); 
+      })
+      .on("click", magnify)
+      .each(stash);
+
+// Distort the specified node to 80% of its parent.
+function magnify(node) {
+  if (parent = node.parent) {
+    var parent,
+        x = parent.x,
+        k = .8;
+    parent.children.forEach(function(sibling) {
+      x += reposition(sibling, x, sibling === node
+          ? parent.dx * k / node.value
+          : parent.dx * (1 - k) / (parent.value - node.value));
+    });
+  } else {
+    reposition(node, 0, node.dx / node.value);
+  }
+
+  path.transition()
+      .duration(750)
+      .attrTween("d", arcTween);
+}
+
+// Recursively reposition the node at position x with scale k.
+function reposition(node, x, k) {
+  node.x = x;
+  if (node.children && (n = node.children.length)) {
+    var i = -1, n;
+    while (++i < n) x += reposition(node.children[i], x, k);
+  }
+  return node.dx = node.value * k;
+}
+
+// Stash the old values for transition.
+function stash(d) {
+  d.x0 = d.x;
+  d.dx0 = d.dx;
+}
+
+// Interpolate the arcs in data space.
+function arcTween(a) {
+  var i = d3.interpolate({x: a.x0, dx: a.dx0}, a);
+  return function(t) {
+    var b = i(t);
+    a.x0 = b.x;
+    a.dx0 = b.dx;
+    return arc(b);
+  };
+}
+
+</script>
+"""
+
+parser = argparse.ArgumentParser(
+  description='git baobab: pace of change in a sunburst chart')
+parser.add_argument('since', metavar='since', type=str,
+  help='first git commit to in include in analysis')
+args = parser.parse_args()
+
+
+class TrackRecord():
+  def __init__(self):
+    self.bytes = 0
+    self.lines = 0
+    self.files = []
+    self.dirs = []
+
+def cannonical(file_path):
+  dirname = os.path.normpath(os.path.dirname(file_path))
+  return '.' if dirname is '' else './' + dirname
+
+repo = Repo(os.getcwd())
+
+# Collect all tracked files at this point in time
+lstree_string = repo.git.ls_tree('--name-only', '-r', 'HEAD')
+tracked_files = lstree_string.split('\n')
+tracked_dirs = {}
+last_dirname = ''
+
+for f in tracked_files:
+  if (not os.path.isfile(f) or f == '.'):
+    print('No file: ' + f)
+    continue
+
+  dirname = cannonical(f)
+
+  # Wire up parents
+  if (dirname != last_dirname):
+    last_dirname = dirname
+    parts = dirname.split(os.sep)
+
+    if (not parts[0] in tracked_dirs):
+      tracked_dirs[parts[0]] = TrackRecord()
+
+    parent_path = parts[0]
+    for p in parts[1:]:
+      current_path = os.path.join(parent_path, p)
+      if (not current_path in tracked_dirs):
+        tracked_dirs[current_path] = TrackRecord()
+      if (not current_path in tracked_dirs[parent_path].dirs):
+        tracked_dirs[parent_path].dirs.append(current_path)
+      parent_path = current_path
+
+  # Accumulate size in bytes
+  tracked_dirs[dirname].bytes += os.stat(f).st_size
+  tracked_dirs[dirname].files.append(os.path.basename(f))
+
+print("Git tracks {0} files in {1} directories".format(
+      len(tracked_files), len(tracked_dirs)))
+
+# Collect stats on modifications since the given commit
+stat_string = repo.git.diff("--color=never", "--stat=5000,4900", args.since + '..HEAD')
+stat_lines = stat_string.split('\n')
+last_line = ''
+
+for s in stat_lines:
+  if ('=>' in s):
+    # Stat lines look like this: path/to/{old.ext => new.ext}  |  123 +-
+    print('Skip rename entry: ' + s)
+    continue
+  # Stat lines look like this: path/to/file.ext  |  123 +-
+  parts = s.split()
+  dirname = cannonical(parts[0])
+  # Ignore some edge cases for now
+  if (not dirname in tracked_dirs):
+    print('Unknown dir: ' + dirname)
+    continue
+  if (not parts[2].isdigit()):
+    print('Invalid number: ' + parts[2])
+    continue
+  tracked_dirs[dirname].lines += int(parts[2])
+
+# We have all necessary data now, let's emit JS for a sunburst chart
+outs = open('/tmp/git-baobab-test.html', 'w')
+
+def path_to_id(path):
+  sha1 = hashlib.sha1()
+  sha1.update(path.encode('utf-8'))
+  return 'node' + sha1.hexdigest()
+
+# Traverse depth-first
+def walk_tracked_dirs(path, indent):
+  node = tracked_dirs[path]
+
+  # Leaf nodes are simple
+  if (len(node.dirs) == 0):
+    outs.write('{0}{{ "name": "{1}", "size": {2} }}'.format(
+               indent, path, node.bytes))
+    return
+
+  # Inner nodes recurse (and handle goddamn trailling comma)
+  outs.write('{0}{{ "name": "{1}", "children": [\n'.format(indent, path))
+  for subdir in node.dirs:
+    walk_tracked_dirs(subdir, indent + '  ')
+    outs.write('\n' if subdir == node.dirs[-1] else ',\n')
+  outs.write('{0}] }}'.format(indent)) 
+
+# Write out all data below root and wire up chart.data
+outs.write(d3_header)
+walk_tracked_dirs('.', '')
+outs.write(d3_footer)
+outs.close()
