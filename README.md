@@ -27,7 +27,7 @@ Show in browser? [Y/n] y
 
 Click on the image to open the original interactive output:
 
-[![example-llvm-project](examples/llvm9-cpp-sources.png)](examples/llvm9-cpp-sources.html)
+[![example-llvm-project](examples/llvm9-cpp-sources.png)](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.html)
 
 The example shows the accumulated changes in C++ files outside tests since Release 8.0 branched on Jan 16, 2019. The size of an arc represents the amount of change in a file/directory relative to its sibling files/directories. The color of an arc indicates the amount of change relative to its line count today. The amount of change is the sum of insertions and deletions.
 
