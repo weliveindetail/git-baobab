@@ -902,18 +902,6 @@ def countModifications(baobab):
 
   return baobab, linesModifiedTotal
 
-### stripEmptyModifiedNodes() ###
-
-def sumUp(node):
-  if (len(node['children'].keys()) > 0):
-    assert node['today'] == 0
-    assert node['modified'] == 0
-    for name, child in node['children'].items():
-      childToday, childModified = sumUp(child)
-      node['today'] += childToday
-      node['modified'] += childModified
-  return node['today'], node['modified']
-
 
 ### renderSunburstChart() ###
 
@@ -991,27 +979,41 @@ def parseRemoteGithub():
       return res.group(1)
   return ''
 
-def replaceRootName(baobab, absname):
-  baobab['name'] = absname[absname.rindex(os.sep)+1:]
+
+def sumUp(node):
+  if (len(node['children'].keys()) > 0):
+    assert node['today'] == 0
+    assert node['modified'] == 0
+    for name, child in node['children'].items():
+      childToday, childModified = sumUp(child)
+      node['today'] += childToday
+      node['modified'] += childModified
+  return node['today'], node['modified']
+
 
 if __name__ == '__main__':
   absname = git('rev-parse', '--show-toplevel')
-  if (absname != os.getcwd()):
-    die('Error: Please run from repository root.')
+  if absname != os.getcwd():
+    die('Error: working directory is not the repository root')
 
-  print('Repository root: {0}'.format(absname))
+  hashSince = git('rev-parse', args.since)
+  if not hashSince.startswith(args.since):
+    die('Error: cannot find commit {0}'.format(args.since))
+
+  hashHead = git('rev-parse', 'HEAD')
+  print('Commits {0}..{1}'.format(hashSince[:12], hashHead[:12]))
+
   baobab, head, linesTodayTotal = populateBaobab()
   baobab, linesModifiedTotal = countModifications(baobab)
-  replaceRootName(baobab, absname)
-
-  print('Baobab: {0} lines today, {1} lines changed since commit {2}'.format(
-        linesTodayTotal, linesModifiedTotal, args.since))
+  baobab['name'] = absname[absname.rindex(os.sep)+1:]
 
   sumToday, sumModified = sumUp(baobab)
   assert(sumToday == linesTodayTotal)
   assert(sumModified == linesModifiedTotal)
 
+  print('{0} lines today, {1} lines changed'.format(
+        linesTodayTotal, linesModifiedTotal))
+
   htmlFileName = renderHtml(baobab, parseRemoteGithub())
-  show = input('Show in browser? [Y/n] '.format(htmlFileName))
-  if (show != 'n'):
+  if input('Show in browser? [Y/n] ') != 'n':
     webbrowser.open('file://' + htmlFileName)
