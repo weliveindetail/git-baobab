@@ -903,7 +903,36 @@ def countModifications(baobab):
   return baobab, linesModifiedTotal
 
 
-### renderSunburstChart() ###
+### renderHtml() ###
+
+def indent(depth):
+  return depth * '  ' if (depth > 0) else ''
+
+def nodeAttributes(node):
+  return '"name": "{0}", "modified": {1}, "today": {2}'.format(
+          os.path.basename(node['name']), node['modified'], node['today'])
+
+def writeChildNodes(node, outs, prefix, depth):
+  # Avoid goddamn trailling comma on last item
+  isBegin = True
+  for name, child in node['children'].items():
+    prefix = '\n' if isBegin else ',\n'
+    if writeAsJson(child, outs, prefix, depth + 1):
+      isBegin = False
+  outs.write('\n')
+
+def writeAsJson(node, outs, prefix='', depth=0):
+  if (node['modified'] == 0):
+    return False # skipped
+  else:
+    outs.write(prefix + indent(depth) + '{')
+    outs.write(nodeAttributes(node))
+    if node['children'].keys():
+      outs.write(', "children": [')
+      writeChildNodes(node, outs, prefix, depth)
+      outs.write('{0}]'.format(indent(depth)))
+    outs.write('}')
+    return True
 
 def jsPreprocessor():
   curlyOpen = re.compile(r'{')
@@ -914,31 +943,6 @@ def jsPreprocessor():
       s = curlyClose.sub(r'}}', s)
       return customKeys.sub(r'{\1}', s)
   return jspp
-
-def indent(depth):
-  return depth * '  ' if (depth > 0) else ''
-
-def writeAsJson(node, outs, prefix='', depth=0):
-  if (node['modified'] == 0):
-    return False # skipped
-  # Inner nodes recurse, leaf nodes are simple
-  child_count = len(node['children'].keys())
-  if child_count > 0:
-    fmt = '{4}{0}{{"name": "{1}", "modified": {2}, "today": {3}, "children": ['
-    outs.write(fmt.format(indent(depth), os.path.basename(node['name']),
-               node['modified'], node['today'], prefix))
-    isBegin = True # Avoid goddamn trailling comma on last item
-    for name, child in node['children'].items():
-      prefix = '\n' if isBegin else ',\n'
-      if writeAsJson(child, outs, prefix, depth + 1):
-        isBegin = False
-    outs.write('\n{0}]}}'.format(indent(depth)))
-  else:
-    node.pop('children', None) # Avoid empty child attributes
-    fmt = '{4}{0}{{"name": "{1}", "modified": {2}, "today": {3}}}'
-    outs.write(fmt.format(indent(depth), os.path.basename(node['name']),
-               node['modified'], node['today'], prefix))
-  return True
 
 def renderHtml(baobab, githubUrl):
   outs = tempfile.NamedTemporaryFile(mode='w', encoding='utf8', suffix='.html', delete=False)
@@ -951,7 +955,7 @@ def renderHtml(baobab, githubUrl):
 
   outs.write('<script type="application/json" id="baobab-json">\n')
   writeAsJson(baobab, outs)
-  outs.write('</script>\n')
+  outs.write('\n</script>\n')
 
   outs.write('<script src="{0}"></script>'.format(args.d3js))
   outs.write(d3_static)
