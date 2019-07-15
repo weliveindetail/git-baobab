@@ -2,219 +2,1018 @@
 
 import argparse
 import hashlib
+import json
 import os
 import os.path
-import time
 import re
+import subprocess
+import sys
+import time
+import tempfile
+import webbrowser
 
-from git import *
+#from git import *
 from datetime import datetime
 
-d3_header = """
-<!DOCTYPE html>
+try:
+    # Python 3
+    from shlex import quote
+except ImportError:
+    # Python 2
+    from pipes import quote
+
+html_header = """<!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-  path { stroke: #fff; }
+  body {
+    background: #fff;
+    font-size: 14px;
+    margin: 0px;
+  }
+  svg {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+  }
+  path {
+    stroke: #eee;
+    stroke-width: 0.3;
+  }
+  p {
+    position: absolute;
+    width: 100%;
+    bottom: 0px;
+    margin: 0px;
+    padding: 8px 0px;
+    font-family: monospace;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.5);
+  }
 </style>
 <body>
-<script type="application/json" id="git-baobab-json">
 """
 
-d3_footer = """
-</script>
-
-<script src="https://d3js.org/d3.v3.min.js"></script>
+d3_static = """
 <script>
-
-var width = window.innerWidth - 50,
-    height = window.innerHeight - 50,
-    radius = 500;
-
-var color = d3.scale.category20c();
-
-var partition = d3.layout.partition()
-    .size([2 * Math.PI, radius])
-    .value(function(d) { return d.size; });
-
-var arc = d3.svg.arc()
-    .startAngle(function(d) { return d.x; })
-    .endAngle(function(d) { return d.x + d.dx; })
-    .innerRadius(function(d) { return d.y; })
-    .outerRadius(function(d) { return d.y + d.dy; });
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-  .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-var embedded_json = JSON.parse(document.getElementById("git-baobab-json").innerHTML)
-svg.data([embedded_json]).selectAll("path")
-      .data(partition.nodes)
-    .enter().append("path")
-      .attr("d", arc)
-      .style("fill", function(d) { 
-        return color((d.children ? d : d.parent).name); 
-      })
-      .on("click", magnify)
-      .each(stash);
-
-// Distort the specified node to 80% of its parent.
-function magnify(node) {
-  if (parent = node.parent) {
-    var parent,
-        x = parent.x,
-        k = .8;
-    parent.children.forEach(function(sibling) {
-      x += reposition(sibling, x, sibling === node
-          ? parent.dx * k / node.value
-          : parent.dx * (1 - k) / (parent.value - node.value));
+if (!String.format) {
+  String.format = function(format) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return format.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number] 
+        : match
+      ;
     });
-  } else {
-    reposition(node, 0, node.dx / node.value);
-  }
-
-  path.transition()
-      .duration(750)
-      .attrTween("d", arcTween);
-}
-
-// Recursively reposition the node at position x with scale k.
-function reposition(node, x, k) {
-  node.x = x;
-  if (node.children && (n = node.children.length)) {
-    var i = -1, n;
-    while (++i < n) x += reposition(node.children[i], x, k);
-  }
-  return node.dx = node.value * k;
-}
-
-// Stash the old values for transition.
-function stash(d) {
-  d.x0 = d.x;
-  d.dx0 = d.dx;
-}
-
-// Interpolate the arcs in data space.
-function arcTween(a) {
-  var i = d3.interpolate({x: a.x0, dx: a.dx0}, a);
-  return function(t) {
-    var b = i(t);
-    a.x0 = b.x;
-    a.dx0 = b.dx;
-    return arc(b);
   };
 }
 
+const baobab = {};
+baobab.data = JSON.parse(document.getElementById("baobab-json").innerHTML);
+
+// Define SVG coords with center in page center
+const viewBox = { left: -50, top: -50, width: 100, height: 100 };
+viewBox.radius = Math.min(viewBox.width, viewBox.height) / 2;
+viewBox.right = viewBox.left + viewBox.width;
+viewBox.bottom = viewBox.top + viewBox.height;
+
+document.getElementById("baobab").setAttribute("viewBox", 
+  String.format("{0} {1} {2} {3}", viewBox.left, viewBox.top, 
+                                   viewBox.width, viewBox.height));
+
+// View-related parameters
+baobab.strokeWidth = viewBox.radius / 750;
+baobab.globalFontSizeMax = viewBox.radius / 10;
+baobab.globalFontSizeMin = viewBox.radius / 50;
+
+function basename(path) {
+  return path.substr(path.lastIndexOf('/') + 1);
+}
+
+function concatPath(d) {
+  var path = d.data.name;
+  for (var p = d.parent; p; p = p.parent) {
+    path = p.data.name + "/" + path;
+  }
+  return path;
+}
+
+function tooltipFormat(d) {
+  return String.format(
+    "{0}\\n{1} lines modified\\n{2} lines today",
+    concatPath(d), humanReadable(d.data.modified), humanReadable(d.data.today));
+}
+
+function humanReadable(val) {
+  if (val > 1000000)
+    return Math.round(val / 100000) / 10 + 'M';
+  else if (val > 1000)
+    return Math.round(val / 100) / 10 + 'K';
+  else
+    return val;
+}
+
+function toHex(n) {
+  const s = Math.round(n).toString(16);
+  return s.length == 1 ? "0" + s : s;
+};
+
+function colorRatioSquareScale(d) {
+  return (d.today == 0) ? 1 : Math.sqrt(d.modified) / Math.sqrt(d.today);
+}
+
+function colorHotCold(d) {
+  const ratio = Math.min(1, colorRatioSquareScale(d));
+  const base = 16 * 3 + 3;
+  const hot = base + (255 - base) * ratio;
+  const cold = base + (255 - base) * (1 - ratio);
+  return String.format("#{0}{1}{2}", toHex(hot), "88", toHex(cold));
+}
+
+const partition = json_data => {
+  const root = d3.hierarchy(json_data).sum(node_data => {
+    return node_data.children ? node_data.modifiedInvisible : node_data.modified;
+  })
+  .sort((a, b) => {
+    return b.data.modified - a.data.modified;
+  });
+
+  var p = d3.partition().size([2 * Math.PI, root.height]);
+  return p(root);
+}
+
+function makeViewCoords(dx0, dx1, dd) {
+  const twoPi = 2 * Math.PI;
+  const x0inbounds = 0 < dx0 && dx0 < twoPi;
+  const x1inbounds = 0 < dx1 && dx1 < twoPi;
+  const fullCircle = dx0 <= 0 && twoPi <= dx1;
+  if (x0inbounds || x1inbounds || fullCircle)
+    return {
+      x0: Math.max(0, dx0), x1: Math.min(twoPi, dx1), y0: dd, y1: dd + 1
+    };
+
+  // Global invariant: (y1 == 0) implies invisible
+  return { x0: 0, x1: 0, y0: 0, y1: 0 };
+}
+
+const root = partition(baobab.data);
+root.each(d => {
+  d.view = makeViewCoords(d.x0, d.x1, d.depth);
+  if (d.children) {
+    // Only leafs (files) have a size, but as zeros are filtered out,
+    // their sizes in the invisible category would be missed.
+    d.todayInvisible = d.today - d.children.reduce(
+      (sum, child) => sum + child.today
+    );
+    d.modifiedInvisible = d.modified - d.children.reduce(
+      (sum, child) => sum + child.modified
+    );
+  }
+});
+
+function makeScaleY(viewRoot) {
+  return d3.scaleLog().domain([1, viewRoot.height + 1]).range([15, viewBox.radius]);
+}
+
+var scale_y = makeScaleY(root);
+
+function rad2deg(rad) {
+  return rad * 90 / Math.PI;
+}
+
+function labelTransform(d) {
+  // Not sure where this edge case comes from,
+  // but it produces Infs on log scale.
+  if (d.view.y0 + d.view.y1 <= 1 || !d.padding)
+      return ``;
+
+  var x = rad2deg(d.view.x0 + d.view.x1);
+  var y = scale_y(d.view.y0) + d.padding + d.fontSize / 2;
+  if (x >= 90 && x <= 270) {
+    return `rotate(${x + 180}) translate(0, ${y})`;
+  } else {
+    return `rotate(${x}) translate(0, ${-y})`;
+  }
+}
+
+const arc = d3.arc()
+  .startAngle(d => d.view.x0)
+  .endAngle(d => d.view.x1)
+  .innerRadius(d => scale_y(d.view.y0))
+  .outerRadius(d => scale_y(d.view.y1));
+
+const svg = d3.select('#baobab')
+  .style("font", "sans-serif");
+
+baobab.canvas = svg.append("g");
+
+baobab.arcShapes = baobab.canvas.append("g")
+  .selectAll("path")
+  .data(root.descendants().slice(1))
+  .join("path")
+  .attr("d", d => arc(d))
+  .style("stroke-width", baobab.strokeWidth);
+
+baobab.arcShapes
+  .filter(d => d.view.y1 > 0)
+  .attr("stroke-opacity", 1)
+  .attr("fill-opacity", 1)
+  .attr("fill", d => colorHotCold(d.data));
+
+baobab.arcShapes
+  .filter(d => d.view.y1 == 0)
+  .attr("stroke-opacity", 0)
+  .attr("fill-opacity", 0);
+
+baobab.arcShapes
+  .filter(d => d.children)
+  .style("cursor", "pointer")
+  .on("click", clicked);
+
+baobab.arcToolTips = baobab.arcShapes.append("title")
+  .text(d => tooltipFormat(d));
+
+function balanceProportions(rr, tr) {
+  var max = Math.PI / 2;
+  var min = 0;
+  // Find zero approximately. Should be 8 bisects.
+  while (max > min + 0.01) {
+    const pivot = (min + max) / 2;
+    if (Math.sin(pivot) - rr - (2 * Math.cos(pivot)) / tr > 0) {
+      max = pivot;
+    } else {
+      min = pivot;
+    }
+  }
+  return min;
+}
+
+function fitTextToArc(arcSpec, textRatio) {
+  const boundsDistance = (fontSize) => {
+    const legX = (fontSize * textRatio) / 2;
+    const legY = arcSpec.innerRadius + fontSize;
+    const hypotenuse = Math.sqrt(Math.pow(legX, 2) + Math.pow(legY, 2));
+    return arcSpec.outerRadius - hypotenuse;
+  };
+
+  // Choose font-size that likely fits in the arc. Works for most cases.
+  const desiredFontSize =
+      Math.max(baobab.globalFontSizeMin,
+               Math.min(arcSpec.height / 2,
+                        arcSpec.innerLength * 0.9 / textRatio,
+                        baobab.globalFontSizeMax));
+  const totalPadding = boundsDistance(desiredFontSize);
+  const innerTextAngle = Math.atan((desiredFontSize * textRatio) /
+                                   (2 * arcSpec.innerRadius + totalPadding));
+  if (totalPadding > 0 && innerTextAngle < arcSpec.centralAngle / 2)
+    return [desiredFontSize, totalPadding / 2];
+
+  // Choose acceptable padding and determine matching font-size.
+  const desiredPadding = arcSpec.height * 0.1;
+  const radiusRatio = (arcSpec.innerRadius + desiredPadding) /
+                      (arcSpec.outerRadius - desiredPadding);
+  const outerTextAngle = balanceProportions(radiusRatio, textRatio);
+  const matchingFontSize = arcSpec.outerRadius * (Math.sin(outerTextAngle) - radiusRatio);
+  if (matchingFontSize > baobab.globalFontSizeMin &&
+      outerTextAngle < arcSpec.centralAngle / 2) {
+    const actualPadding = boundsDistance(matchingFontSize);
+    const actualFontSize = Math.min(matchingFontSize, baobab.globalFontSizeMax);
+    if (actualPadding > 0)
+      return [actualFontSize, actualPadding / 2];
+  }
+
+  if (desiredFontSize > baobab.globalFontSizeMin) {
+    const minTotalPadding = boundsDistance(baobab.globalFontSizeMin);
+    const innerTextAngle = Math.atan((baobab.globalFontSizeMin * textRatio) /
+                                     (2 * arcSpec.innerRadius + minTotalPadding));
+    if (minTotalPadding > 0 && innerTextAngle < arcSpec.centralAngle / 2)
+      return [baobab.globalFontSizeMin, minTotalPadding / 2];
+  }
+
+  // All approaches failed. Hide label and log error in caller.
+  return [0.001, 0];
+}
+
+function makeArcSpec(view) {
+  const spec = {};
+  //console.assert(view.y0 == view.y1 - 1, "Integral Y-scale increments");
+  //console.assert(0 <= view.x0 && view.x0 <= view.x1 && view.x1 <= 2 * Math.PI,
+  //               "X-scale in radians");
+
+  spec.innerRadius = scale_y(view.y0);
+  spec.outerRadius = scale_y(view.y1);
+  spec.centralAngle = view.x1 - view.x0;
+  spec.innerLength = spec.centralAngle * spec.innerRadius;
+  spec.height = spec.outerRadius - spec.innerRadius;
+
+  //console.assert(spec.outerRadius <= viewBox.radius, "Radius exceeding bounds");
+  //console.assert(spec.innerLength < 2 * Math.PI * viewBox.radius &&
+  //               spec.innerLength >= 0, "Invalid inner arc length");
+  return spec;
+}
+
+function labelFontSizeArc(d) {
+  [ d.fontSize, d.padding ] = fitTextToArc(makeArcSpec(d.view), d.textRatio);
+  if (d.fontSize <= 0.001)
+    console.log("Failed to determine font-size to fit: %s", d.data.name);
+
+  return d.fontSize + "px";
+}
+
+function labelVisible(d) {
+  // Invisible arc.
+  if (d.view.y1 == 0)
+    return false;
+
+  // No way to fit in text.
+  const arcSpec = makeArcSpec(d.view);
+  if (baobab.globalFontSizeMin > arcSpec.height / 2 ||
+      baobab.globalFontSizeMin * d.textRatio > arcSpec.outerRadius)
+    return false;
+
+  return true;
+}
+
+function labelFontSizeRoot(element, d) {
+  // Constant size, variable content. Initial font-size is 14px.
+  const textRatio = (d.fontSize || 14) / element.getComputedTextLength();
+  const matchingFontSize = 2 * scale_y(1) * textRatio * 0.9;
+  d.fontSize = Math.min(matchingFontSize, baobab.globalFontSizeMax);
+  return d.fontSize + "px";
+}
+
+baobab.arcLabels = baobab.canvas.append("g")
+  .attr("pointer-events", "none")
+  .style("fill", "#333")
+  .selectAll("text")
+  .data(root.descendants().slice(1))
+  .join("text")
+  .attr("text-anchor", "middle")
+  .attr("dominant-baseline", "central")
+  .attr("font-family", "sans-serif")
+  .text(d => d.data.name);
+
+// Calculate ratio of text-width to font-size once, based on initial 14px
+// font-size. Ratio is constant because arc label content is fixed.
+baobab.arcLabels.each(function(d) {
+  d.textRatio = this.getComputedTextLength() / 14;
+});
+
+baobab.arcLabels
+  .filter(d => labelVisible(d))
+  .attr("fill-opacity", 1)
+  .attr("font-size", d => labelFontSizeArc(d))
+  .attr("transform", d => labelTransform(d))
+  .on("click", clicked);
+
+baobab.arcLabels
+  .filter(d => !labelVisible(d))
+  .attr("fill-opacity", 0);
+
+baobab.rootShape = baobab.canvas.append("circle")
+  .datum(root)
+  .attr("r", scale_y(1))
+  .attr("fill", "#eee")
+  .attr("fill-opacity", 0.6)
+  .attr("pointer-events", "all")
+  .style("cursor", "default")
+  .on("click", p => clicked(p.parent));
+
+baobab.rootToolTip = baobab.rootShape.append("title")
+  .text(d => tooltipFormat(d));
+
+baobab.rootLabel = baobab.canvas.append("text")
+  .datum(root)
+  .text(d => concatPath(d))
+  .attr("pointer-events", "none")
+  .attr("fill", "#333")
+  .attr("text-anchor", "middle")
+  .attr("dominant-baseline", "central")
+  .attr("font-family", "sans-serif")
+  .style("font-size", function(d) {
+    return labelFontSizeRoot(this, d);
+  });
+
+function clicked(item) {
+  const r = item || root;
+  scale_y = makeScaleY(r);
+
+  baobab.rootShape
+    .datum(r)
+    .style("cursor", r.parent ? "pointer" :  "default");
+
+  baobab.rootLabel
+    .text(concatPath(r))
+    .style("font-size", function(d) {
+      return labelFontSizeRoot(this, d);
+    });
+  
+  baobab.rootToolTip
+    .text(d => tooltipFormat(d));
+
+  const twoPi = 2 * Math.PI;
+  const reciprocalDiffRootX = 1 / (r.x1 - r.x0);
+  const makeSubviewCoords = (dx0, dx1, dd) => {
+    const nd = dd - r.depth;
+    if (nd > 0) {
+      const nx0 = (dx0 - r.x0) * reciprocalDiffRootX;
+      const nx1 = (dx1 - r.x0) * reciprocalDiffRootX;
+      const x0inbounds = 0 < nx0 && nx0 < 1;
+      const x1inbounds = 0 < nx1 && nx1 < 1;
+      const fullCircle = nx0 <= 0 && 1 <= nx1;
+      if (x0inbounds || x1inbounds || fullCircle)
+        return {
+          x0: Math.max(0, nx0) * twoPi,
+          x1: Math.min(1, nx1) * twoPi,
+          y0: nd,
+          y1: nd + 1
+        };
+    }
+
+    // Global invariant: (y1 == 0) implies invisible
+    return { x0: 0, x1: 0, y0: 0, y1: 0 };
+  };
+
+  root.each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth));
+
+  baobab.arcShapes
+    .attr("d", d => arc(d))
+    .attr("fill-opacity", d => (d.view.y1 > 0) ? 1 : 0)
+    .attr("stroke-opacity", d => (d.view.y1 > 0) ? 1 : 0);
+
+  baobab.arcLabels
+    .filter(d => labelVisible(d))
+    .attr("fill-opacity", 1)
+    .attr("font-size", d => labelFontSizeArc(d))
+    .attr("transform", d => labelTransform(d));
+
+  baobab.arcLabels
+    .filter(d => !labelVisible(d))
+    .attr("fill-opacity", 0);
+}
+
+var regex = /[?&]([^=#]+)=([^&#]*)/g,
+    url = window.location.href,
+    params = {},
+    match;
+while(match = regex.exec(url)) {
+  params[match[1]] = match[2];
+}
+
+if (params["path"]) {
+  var path = params["path"].split("/");
+  var select = root;
+  for (var i = 1; i < path.length; i++) {
+    const child = select.children.find(node => node.data["name"] == path[i]);
+    if (child && child["children"])
+      select = child
+    else
+      break;
+  }
+  clicked(select);
+}
 </script>
 """
 
+d3_openFileDiffsOnGithub = """
+<script>
+function showOnGithub(d) {
+  const repoUrl = "${github_remote}";
+  const commitRange = "${sha_from}^..${sha_to}";
+  const anchorId = md5(d.data.name.substr(2));
+  const url = String.format("https://{0}/compare/{1}#diff-{2}",
+                            repoUrl, commitRange, anchorId);
+  window.open(url, '_blank');
+}
+
+baobab.arcShapes
+  .filter(d => !d.children)
+  .style("cursor", "pointer")
+  .on("click", d => showOnGithub(d));
+</script>
+"""
+
+
+all_languages = [
+  [ "actionscript", [ "as", "mxml" ] ],
+  [ "ada", [ "ada", "adb", "ads" ] ],
+  [ "asciidoc", [ "adoc", "ad", "asc", "asciidoc" ] ],
+  [ "apl", [ "apl" ] ],
+  [ "asm", [ "asm", "s" ] ],
+  [ "asp", [ "asp", "asa", "aspx", "asax", "ashx", "ascx", "asmx" ] ],
+  [ "aspx", [ "asp", "asa", "aspx", "asax", "ashx", "ascx", "asmx" ] ],
+  [ "batch", [ "bat", "cmd" ] ],
+  [ "bitbake", [ "bb", "bbappend", "bbclass", "inc" ] ],
+  [ "bro", [ "bro", "bif" ] ],
+  [ "cc", [ "c", "h", "xs" ] ],
+  [ "cfmx", [ "cfc", "cfm", "cfml" ] ],
+  [ "chpl", [ "chpl" ] ],
+  [ "clojure", [ "clj", "cljs", "cljc", "cljx" ] ],
+  [ "coffee", [ "coffee", "cjsx" ] ],
+  [ "config", [ "config" ] ],
+  [ "coq", [ "coq", "g", "v" ] ],
+  [ "cpp", [ "cpp", "cc", "C", "cxx", "m", "hpp", "hh", "h", "H", "hxx", "tpp" ] ],
+  [ "crystal", [ "cr", "ecr" ] ],
+  [ "csharp", [ "cs" ] ],
+  [ "cshtml", [ "cshtml" ] ],
+  [ "css", [ "css" ] ],
+  [ "cython", [ "pyx", "pxd", "pxi" ] ],
+  [ "delphi", [ "pas", "int", "dfm", "nfm", "dof", "dpk", "dpr", "dproj", "groupproj", "bdsgroup", "bdsproj" ] ],
+  [ "dlang", [ "d", "di" ] ],
+  [ "dot", [ "dot", "gv" ] ],
+  [ "dts", [ "dts", "dtsi" ] ],
+  [ "ebuild", [ "ebuild", "eclass" ] ],
+  [ "elisp", [ "el" ] ],
+  [ "elixir", [ "ex", "eex", "exs" ] ],
+  [ "elm", [ "elm" ] ],
+  [ "erlang", [ "erl", "hrl" ] ],
+  [ "factor", [ "factor" ] ],
+  [ "fortran", [ "f", "F", "f77", "f90", "F90", "f95", "f03", "for", "ftn", "fpp", "FPP" ] ],
+  [ "fsharp", [ "fs", "fsi", "fsx" ] ],
+  [ "gettext", [ "po", "pot", "mo" ] ],
+  [ "glsl", [ "vert", "tesc", "tese", "geom", "frag", "comp" ] ],
+  [ "go", [ "go" ] ],
+  [ "groovy", [ "groovy", "gtmpl", "gpp", "grunit", "gradle" ] ],
+  [ "haml", [ "haml" ] ],
+  [ "handlebars", [ "hbs" ] ],
+  [ "haskell", [ "hs", "hsig", "lhs" ] ],
+  [ "haxe", [ "hx" ] ],
+  [ "hh", [ "h" ] ],
+  [ "html", [ "htm", "html", "shtml", "xhtml" ] ],
+  [ "idris", [ "idr", "ipkg", "lidr" ] ],
+  [ "ini", [ "ini" ] ],
+  [ "ipython", [ "ipynb" ] ],
+  [ "isabelle", [ "thy" ] ],
+  [ "j", [ "ijs" ] ],
+  [ "jade", [ "jade" ] ],
+  [ "java", [ "java", "properties" ] ],
+  [ "jinja2", [ "j2" ] ],
+  [ "js", [ "es6", "js", "jsx", "vue" ] ],
+  [ "json", [ "json" ] ],
+  [ "jsp", [ "jsp", "jspx", "jhtm", "jhtml", "jspf", "tag", "tagf" ] ],
+  [ "julia", [ "jl" ] ],
+  [ "kotlin", [ "kt" ] ],
+  [ "less", [ "less" ] ],
+  [ "liquid", [ "liquid" ] ],
+  [ "lisp", [ "lisp", "lsp" ] ],
+  [ "log", [ "log" ] ],
+  [ "lua", [ "lua" ] ],
+  [ "m4", [ "m4" ] ],
+  [ "make", [ "Makefiles", "mk", "mak" ] ],
+  [ "mako", [ "mako" ] ],
+  [ "markdown", [ "markdown", "mdown", "mdwn", "mkdn", "mkd", "md" ] ],
+  [ "mason", [ "mas", "mhtml", "mpl", "mtxt" ] ],
+  [ "matlab", [ "m" ] ],
+  [ "mathematica", [ "m", "wl" ] ],
+  [ "md", [ "markdown", "mdown", "mdwn", "mkdn", "mkd", "md" ] ],
+  [ "mercury", [ "m", "moo" ] ],
+  [ "naccess", [ "asa", "rsa" ] ],
+  [ "nim", [ "nim" ] ],
+  [ "nix", [ "nix" ] ],
+  [ "objc", [ "m", "h" ] ],
+  [ "objcpp", [ "mm", "h" ] ],
+  [ "ocaml", [ "ml", "mli", "mll", "mly" ] ],
+  [ "octave", [ "m" ] ],
+  [ "org", [ "org" ] ],
+  [ "parrot", [ "pir", "pasm", "pmc", "ops", "pod", "pg", "tg" ] ],
+  [ "pdb", [ "pdb" ] ],
+  [ "perl", [ "pl", "pm", "pm6", "pod", "t" ] ],
+  [ "php", [ "php", "phpt", "php3", "php4", "php5", "phtml" ] ],
+  [ "pike", [ "pike", "pmod" ] ],
+  [ "plist", [ "plist" ] ],
+  [ "plone", [ "pt", "cpt", "metadata", "cpy", "py", "xml", "zcml" ] ],
+  [ "powershell", [ "ps1" ] ],
+  [ "proto", [ "proto" ] ],
+  [ "ps1", [ "ps1" ] ],
+  [ "pug", [ "pug" ] ],
+  [ "puppet", [ "pp" ] ],
+  [ "python", [ "py" ] ],
+  [ "qml", [ "qml" ] ],
+  [ "racket", [ "rkt", "ss", "scm" ] ],
+  [ "rake", [ "Rakefile" ] ],
+  [ "razor", [ "cshtml" ] ],
+  [ "restructuredtext", [ "rst" ] ],
+  [ "rs", [ "rs" ] ],
+  [ "r", [ "r", "R", "Rmd", "Rnw", "Rtex", "Rrst" ] ],
+  [ "rdoc", [ "rdoc" ] ],
+  [ "ruby", [ "rb", "rhtml", "rjs", "rxml", "erb", "rake", "spec" ] ],
+  [ "rust", [ "rs" ] ],
+  [ "salt", [ "sls" ] ],
+  [ "sass", [ "sass", "scss" ] ],
+  [ "scala", [ "scala" ] ],
+  [ "scheme", [ "scm", "ss" ] ],
+  [ "shell", [ "sh", "bash", "csh", "tcsh", "ksh", "zsh", "fish" ] ],
+  [ "smalltalk", [ "st" ] ],
+  [ "sml", [ "sml", "fun", "mlb", "sig" ] ],
+  [ "sql", [ "sql", "ctl" ] ],
+  [ "stata", [ "do", "ado" ] ],
+  [ "stylus", [ "styl" ] ],
+  [ "swift", [ "swift" ] ],
+  [ "tcl", [ "tcl", "itcl", "itk" ] ],
+  [ "terraform", [ "tf", "tfvars" ] ],
+  [ "tex", [ "tex", "cls", "sty" ] ],
+  [ "thrift", [ "thrift" ] ],
+  [ "tla", [ "tla" ] ],
+  [ "tt", [ "tt", "tt2", "ttml" ] ],
+  [ "toml", [ "toml" ] ],
+  [ "ts", [ "ts", "tsx" ] ],
+  [ "twig", [ "twig" ] ],
+  [ "vala", [ "vala", "vapi" ] ],
+  [ "vb", [ "bas", "cls", "frm", "ctl", "vb", "resx" ] ],
+  [ "velocity", [ "vm", "vtl", "vsl" ] ],
+  [ "verilog", [ "v", "vh", "sv", "svh" ] ],
+  [ "vhdl", [ "vhd", "vhdl" ] ],
+  [ "vim", [ "vim" ] ],
+  [ "wix", [ "wxi", "wxs" ] ],
+  [ "wsdl", [ "wsdl" ] ],
+  [ "wadl", [ "wadl" ] ],
+  [ "xml", [ "xml", "dtd", "xsl", "xslt", "xsd", "ent", "tld", "plist", "wsdl" ] ],
+  [ "yaml", [ "yaml", "yml" ] ]
+]
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+def die(msg):
+    eprint(msg)
+    sys.exit(1)
+
+#/Users/staefsn/Develop/Boabab/d3.v5.js
+#/Users/staefsn/Develop/Boabab/md5.js
+
+d3js_default = 'https://d3js.org/d3.v5.min.js'
+md5js_default = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js'
+
 parser = argparse.ArgumentParser(
-  description='git baobab: pace of change in a sunburst chart')
+  description='git baobab: explore changes in a sunburst chart')
 parser.add_argument('since', metavar='since', type=str,
-  help='first git commit to in include in analysis')
+  help='The git commit to start the analysis from')
+parser.add_argument('-d3js', metavar=d3js_default, type=str, default=d3js_default,
+  help='URL to custom d3js variant (tested with v5)')
+parser.add_argument('-md5js', metavar=md5js_default, type=str, default=md5js_default,
+  help='URL to custom script that provides a `md5()` function (for GitHub integration)')
+parser.add_argument('-size', metavar='100%%', type=str, default='100%',
+  help='Display size of the resulting image as CSS length value')
+parser.add_argument('-filter', metavar='.*', type=str,
+  help='Add the given regex to the file filter')
+parser.add_argument('-exclude', metavar='.*', type=str,
+  help='Exclude matching files from the file filter')
+
+langs = parser.add_argument_group('include files with extensions')
+
+for lang in all_languages:
+  langs.add_argument('--' + lang[0],
+    dest='requested_language_ids', action='append_const', const=lang[0],
+    help=', '.join(lang[1]))
+
+# CMake is more complicated
+langs.add_argument('--cmake',
+  dest='requested_language_cmake', action='store_const', const=True,
+  help='cmake, in (and CMakeLists.txt files)')
+
 args = parser.parse_args()
 
+if (args.filter):
+  # Use custom regex and potential lang extensions
+  if (args.requested_language_cmake):
+    file_search_regex = '({0})(.*CMakeLists.txt|.*\.(cmake|in))$'.format(args.filter)
+  else:
+    file_search_regex = '({0})'.format(args.filter)
+else:
+  # Use potential lang extensions or match all
+  if (args.requested_language_cmake):
+    file_search_regex = '(CMakeLists.txt$)|(.*\.(cmake|in)$)'
+  else:
+    file_search_regex = ''
 
-class TrackRecord():
-  def __init__(self):
-    self.bytes = 0
-    self.lines = 0
-    self.files = []
-    self.dirs = []
+# Append regex's for requested languages
+if args.requested_language_ids:
+  for lang in args.requested_language_ids:
+    suffixes = next((x[1] for x in all_languages if x[0] == lang), None)
+    if (suffixes):
+      file_search_regex += '.*\.(' + '|'.join(suffixes) + ')$'
+    else:
+      die('Error: undefined language specifier "' + lang +
+          '" should have been caught in ArgumentParser.')
+
+if args.exclude:
+  file_exclude_regex = args.exclude
+else:
+  file_exclude_regex = '^$' # never matches
+
+baobabIncludePattern = re.compile(file_search_regex, re.IGNORECASE)
+baobabExcludePattern = re.compile(file_exclude_regex, re.IGNORECASE)
+baobabFileSizeCap = 1024 * 1024 * 8 # MB
+
+
+VERBOSE = False
+dev_null_fd = None
+
+
+def log_verbose(*args, **kwargs):
+    if not VERBOSE:
+        return
+    print(*args, **kwargs)
+
+
+def get_dev_null():
+    """Lazily create a /dev/null fd for use in shell()"""
+    global dev_null_fd
+    if dev_null_fd is None:
+        dev_null_fd = open(os.devnull, 'w')
+    return dev_null_fd
+
+
+
+def shell(cmd, strip=True, stdin=None, die_on_failure=True,
+          ignore_errors=False, text=True):
+    # Escape args when logging for easy repro.
+    quoted_cmd = [quote(arg) for arg in cmd]
+    cwd = os.getcwd()
+    log_verbose('Running in %s: %s' % (cwd, ' '.join(quoted_cmd)))
+
+    err_pipe = subprocess.PIPE
+    if ignore_errors:
+        # Silence errors if requested.
+        err_pipe = get_dev_null()
+
+    start = time.time()
+    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=err_pipe,
+                         stdin=subprocess.PIPE,
+                         universal_newlines=text)
+    stdout, stderr = p.communicate(input=stdin)
+    elapsed = time.time() - start
+
+    log_verbose('Command took %0.1fs' % elapsed)
+
+    if p.returncode == 0 or ignore_errors:
+        if stderr and not ignore_errors:
+            eprint('`%s` printed to stderr:' % ' '.join(quoted_cmd))
+            eprint(stderr.rstrip())
+        if strip:
+            if text:
+                stdout = stdout.rstrip('\r\n')
+            else:
+                stdout = stdout.rstrip(b'\r\n')
+        if VERBOSE:
+            for l in stdout.splitlines():
+                log_verbose("STDOUT: %s" % l)
+        return stdout
+    err_msg = '`%s` returned %s' % (' '.join(quoted_cmd), p.returncode)
+    eprint(err_msg)
+    if stderr:
+        eprint(stderr.rstrip())
+    if die_on_failure:
+        sys.exit(2)
+    raise RuntimeError(err_msg)
+
+
+def git(*cmd, **kwargs):
+    return shell(['git'] + list(cmd), **kwargs)
+
+
 
 def cannonical(file_path):
-  dirname = os.path.normpath(os.path.dirname(file_path))
-  return '.' if dirname is '' else './' + dirname
+  normalized = os.path.normpath(file_path)
+  dirname = os.path.dirname(normalized)
+  dirname = '.' if dirname is '' else './' + dirname
+  basename = os.path.basename(normalized)
+  return normalized, dirname, basename
 
-repo = Repo(os.getcwd())
 
-# Collect all tracked files at this point in time
-lstree_string = repo.git.ls_tree('--name-only', '-r', 'HEAD')
-tracked_files = lstree_string.split('\n')
-tracked_dirs = {}
-last_dirname = ''
+### printStatus() ###
 
-for f in tracked_files:
-  if (not os.path.isfile(f) or f == '.'):
-    print('No file: ' + f)
-    continue
+printStatusLastBanner = ''
+def printStatusBanner(banner):
+  global printStatusLastBanner
+  if banner != printStatusLastBanner:
+    printStatusLastBanner = banner
+    print('\033[K' + banner, end='\r', flush=True)
 
-  dirname = cannonical(f)
+printStatusLastPos = -2
+def printStatus(banner, relname):
+  global printStatusLastPos
+  pos = relname.find(os.sep)
+  if pos != printStatusLastPos:
+    printStatusLastPos = pos
+    subdir = relname[:pos] if pos >= 0 else '.'
+    print('\033[K' + banner + ': ' + subdir, end='\r', flush=True)
 
-  # Wire up parents
-  if (dirname != last_dirname):
-    last_dirname = dirname
-    parts = dirname.split(os.sep)
 
-    if (not parts[0] in tracked_dirs):
-      tracked_dirs[parts[0]] = TrackRecord()
+### populateBaobab() ###
 
-    parent_path = parts[0]
-    for p in parts[1:]:
-      current_path = os.path.join(parent_path, p)
-      if (not current_path in tracked_dirs):
-        tracked_dirs[current_path] = TrackRecord()
-      if (not current_path in tracked_dirs[parent_path].dirs):
-        tracked_dirs[parent_path].dirs.append(current_path)
-      parent_path = current_path
+def lineCountToday(relname):
+  count = 0
+  blockSize = 4096
+  with open(relname, 'rb') as f:
+    while 1:
+      buffer = f.read(blockSize)
+      if not buffer: break
+      try:
+        count += buffer.decode().count('\n')
+      except UnicodeDecodeError:
+        # Ignore blocks with invalid unicode characters
+        continue
+      except:
+        die("Error:", sys.exc_info()[0])
+  return count
 
-  # Accumulate size in bytes
-  tracked_dirs[dirname].bytes += os.stat(f).st_size
-  tracked_dirs[dirname].files.append(os.path.basename(f))
+def createRecord(n):
+  return { 'name': n, 'modified': 0, 'today': 0, 'children': {} }
 
-print("Git tracks {0} files in {1} directories".format(
-      len(tracked_files), len(tracked_dirs)))
+def enterSubRecord(record, child):
+  if child not in record['children']:
+    relname = record['name'] + os.sep + child
+    record['children'][child] = createRecord(relname)
+  return record['children'][child]
 
-# Collect stats on modifications since the given commit
-stat_string = repo.git.diff("--color=never", "--stat=5000,4900", args.since + '..HEAD')
-stat_lines = stat_string.split('\n')
-last_line = ''
+def initPathRecords(record, relname):
+  for part in relname.split(os.sep):
+    record = enterSubRecord(record, part)
+  record['today'] = lineCountToday(relname)
+  return record['today']
 
-for s in stat_lines:
-  if ('=>' in s):
-    # Stat lines look like this: path/to/{old.ext => new.ext}  |  123 +-
-    print('Skip rename entry: ' + s)
-    continue
-  # Stat lines look like this: path/to/file.ext  |  123 +-
+def baobabInclude(relname):
+  if (relname):
+    if baobabIncludePattern.search(relname):
+      if not baobabExcludePattern.search(relname):
+        return True
+  return False
+
+def populateBaobab():
+  head = git('rev-parse', 'HEAD')
+  lstree = git('ls-tree', '--name-only', '-z', '-r', head)
+  trackedFiles = lstree.split('\0')
+
+  baobab = createRecord('.')
+  matchedFiles = 0
+  linesTodayTotal = 0
+
+  for relname in trackedFiles:
+    printStatus('Traversing', relname)
+    if (baobabInclude(relname)):
+      if (os.path.isfile(relname)):
+        matchedFiles += 1
+        if (os.path.getsize(relname) < baobabFileSizeCap):
+          linesTodayTotal += initPathRecords(baobab, relname)
+      else:
+        print('No file: ' + relname)
+
+  print('Filter matches {0} tracked files'.format(matchedFiles))
+  return baobab, head, linesTodayTotal
+
+
+### countModifications() ###
+
+def parseStatLine(s):
   parts = s.split()
-  dirname = cannonical(parts[0])
-  # Ignore some edge cases for now
-  if (not dirname in tracked_dirs):
-    print('Unknown dir: ' + dirname)
-    continue
-  if (not parts[2].isdigit()):
-    print('Invalid number: ' + parts[2])
-    continue
-  tracked_dirs[dirname].lines += int(parts[2])
+  if (not '=>' in s):
+    # path/to/file.ext  |  123 +-
+    return parts[0], parts[2]
+  elif (not '{' in s):
+    # old/path/to/file.ext => new/path/to/file.ext  |  123 +-
+    return parts[2], parts[4]
+  else:
+    # path/to/{old-dir => new-dir}/file.ext  |  123 +-
+    relname = parts[0][:parts[0].index('{')] + parts[2].replace('}', '')
+    return relname, parts[4]
 
-# We have all necessary data now, let's emit JS for a sunburst chart
-outs = open('/tmp/git-baobab-test.html', 'w')
+def addToRecord(root, relname, lines):
+  record = root
+  for part in relname.split(os.sep):
+    if not part in record['children']:
+      # Deleted during period of interest, check filter now
+      if not baobabInclude(relname):
+        return 0
+    record = enterSubRecord(record, part)
+  record['modified'] += lines
+  return lines
 
-def path_to_id(path):
-  sha1 = hashlib.sha1()
-  sha1.update(path.encode('utf-8'))
-  return 'node' + sha1.hexdigest()
+def countModifications(baobab):
+  printStatusBanner('Fetching stats')
+  stat = git('diff', '--color=never', '--stat=5000,4900', args.since + '..HEAD')
+  statLines = stat.split('\n')[:-1] # Skip last stat line (summary)
+  linesModifiedTotal = 0
 
-# Traverse depth-first
-def walk_tracked_dirs(path, indent):
-  node = tracked_dirs[path]
+  for s in statLines:
+    relname, lines = parseStatLine(s)
+    printStatus('Counting changes', relname)
+    if (lines.isdigit()):
+      linesModifiedTotal += addToRecord(baobab, relname, int(lines))
 
-  # Leaf nodes are simple
-  if (len(node.dirs) == 0):
-    outs.write('{0}{{ "name": "{1}", "size": {2} }}'.format(
-               indent, path, node.bytes))
-    return
+  return baobab, linesModifiedTotal
 
-  # Inner nodes recurse (and handle goddamn trailling comma)
-  outs.write('{0}{{ "name": "{1}", "children": [\n'.format(indent, path))
-  for subdir in node.dirs:
-    walk_tracked_dirs(subdir, indent + '  ')
-    outs.write('\n' if subdir == node.dirs[-1] else ',\n')
-  outs.write('{0}] }}'.format(indent)) 
+### stripEmptyModifiedNodes() ###
 
-# Write out all data below root and wire up chart.data
-outs.write(d3_header)
-walk_tracked_dirs('.', '')
-outs.write(d3_footer)
-outs.close()
+def sumUp(node):
+  if (len(node['children'].keys()) > 0):
+    assert node['today'] == 0
+    assert node['modified'] == 0
+    for name, child in node['children'].items():
+      childToday, childModified = sumUp(child)
+      node['today'] += childToday
+      node['modified'] += childModified
+  return node['today'], node['modified']
+
+
+### renderSunburstChart() ###
+
+def jsPreprocessor():
+  curlyOpen = re.compile(r'{')
+  curlyClose = re.compile(r'}')
+  customKeys = re.compile(r'\${{(.*?)}}')
+  def jspp(s):
+      s = curlyOpen.sub(r'{{', s)
+      s = curlyClose.sub(r'}}', s)
+      return customKeys.sub(r'{\1}', s)
+  return jspp
+
+def indent(depth):
+  return depth * '  ' if (depth > 0) else ''
+
+def writeAsJson(node, outs, prefix='', depth=0):
+  if (node['modified'] == 0):
+    return False # skipped
+  # Inner nodes recurse, leaf nodes are simple
+  child_count = len(node['children'].keys())
+  if child_count > 0:
+    fmt = '{4}{0}{{"name": "{1}", "modified": {2}, "today": {3}, "children": ['
+    outs.write(fmt.format(indent(depth), os.path.basename(node['name']),
+               node['modified'], node['today'], prefix))
+    isBegin = True # Avoid goddamn trailling comma on last item
+    for name, child in node['children'].items():
+      prefix = '\n' if isBegin else ',\n'
+      if writeAsJson(child, outs, prefix, depth + 1):
+        isBegin = False
+    outs.write('\n{0}]}}'.format(indent(depth)))
+  else:
+    node.pop('children', None) # Avoid empty child attributes
+    fmt = '{4}{0}{{"name": "{1}", "modified": {2}, "today": {3}}}'
+    outs.write(fmt.format(indent(depth), os.path.basename(node['name']),
+               node['modified'], node['today'], prefix))
+  return True
+
+def renderHtml(baobab, githubUrl):
+  outs = tempfile.NamedTemporaryFile(mode='w', encoding='utf8', suffix='.html', delete=False)
+  print('Export chart to {0}'.format(outs.name))
+
+  jspp = jsPreprocessor()
+  outs.write(jspp(html_header).format(width=args.size, height=args.size))
+  outs.write("<svg id=\"baobab\"></svg>\n")
+  outs.write("<p>git baobab {0}</p>\n".format(" ".join(sys.argv[1:])))
+
+  outs.write('<script type="application/json" id="baobab-json">\n')
+  writeAsJson(baobab, outs)
+  outs.write('</script>\n')
+
+  outs.write('<script src="{0}"></script>'.format(args.d3js))
+  outs.write(d3_static)
+
+  if githubUrl:
+    outs.write('<script src="{0}"></script>'.format(args.md5js))
+    outs.write(jspp(d3_openFileDiffsOnGithub).format(
+      github_remote=githubUrl, sha_from=args.since, sha_to=head
+    ))
+
+  outs.close()
+  return outs.name
+
+
+### main() ###
+
+parse_remote_github = re.compile(r'^.*\w.*(github\.com/.*/.*)\.git.*')
+def parseRemoteGithub():
+  remotes_string = git('remote', '-v')
+  remotes_lines = remotes_string.split('\n')
+  for s in remotes_lines:
+    res = parse_remote_github.search(s)
+    if (res):
+      return res.group(1)
+  return ''
+
+def replaceRootName(baobab, absname):
+  baobab['name'] = absname[absname.rindex(os.sep)+1:]
+
+if __name__ == '__main__':
+  absname = git('rev-parse', '--show-toplevel')
+  if (absname != os.getcwd()):
+    die('Error: Please run from repository root.')
+
+  print('Repository root: {0}'.format(absname))
+  baobab, head, linesTodayTotal = populateBaobab()
+  baobab, linesModifiedTotal = countModifications(baobab)
+  replaceRootName(baobab, absname)
+
+  print('Baobab: {0} lines today, {1} lines changed since commit {2}'.format(
+        linesTodayTotal, linesModifiedTotal, args.since))
+
+  sumToday, sumModified = sumUp(baobab)
+  assert(sumToday == linesTodayTotal)
+  assert(sumModified == linesModifiedTotal)
+
+  htmlFileName = renderHtml(baobab, parseRemoteGithub())
+  show = input('Show in browser? [Y/n] '.format(htmlFileName))
+  if (show != 'n'):
+    webbrowser.open('file://' + htmlFileName)
