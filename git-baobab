@@ -12,15 +12,8 @@ import time
 import tempfile
 import webbrowser
 
-#from git import *
 from datetime import datetime
-
-try:
-    # Python 3
-    from shlex import quote
-except ImportError:
-    # Python 2
-    from pipes import quote
+from shlex import quote
 
 html_header = """<!DOCTYPE html>
 <meta charset="utf-8">
@@ -631,14 +624,12 @@ all_languages = [
 
 
 def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+  print(*args, file=sys.stderr, **kwargs)
 
 def die(msg):
-    eprint(msg)
-    sys.exit(1)
+  eprint(msg)
+  sys.exit(1)
 
-#/Users/staefsn/Develop/Boabab/d3.v5.js
-#/Users/staefsn/Develop/Boabab/md5.js
 
 d3js_default = 'https://d3js.org/d3.v5.min.js'
 md5js_default = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js'
@@ -705,81 +696,6 @@ baobabExcludePattern = re.compile(file_exclude_regex, re.IGNORECASE)
 baobabFileSizeCap = 1024 * 1024 * 8 # MB
 
 
-VERBOSE = False
-dev_null_fd = None
-
-
-def log_verbose(*args, **kwargs):
-    if not VERBOSE:
-        return
-    print(*args, **kwargs)
-
-
-def get_dev_null():
-    """Lazily create a /dev/null fd for use in shell()"""
-    global dev_null_fd
-    if dev_null_fd is None:
-        dev_null_fd = open(os.devnull, 'w')
-    return dev_null_fd
-
-
-
-def shell(cmd, strip=True, stdin=None, die_on_failure=True,
-          ignore_errors=False, text=True):
-    # Escape args when logging for easy repro.
-    quoted_cmd = [quote(arg) for arg in cmd]
-    cwd = os.getcwd()
-    log_verbose('Running in %s: %s' % (cwd, ' '.join(quoted_cmd)))
-
-    err_pipe = subprocess.PIPE
-    if ignore_errors:
-        # Silence errors if requested.
-        err_pipe = get_dev_null()
-
-    start = time.time()
-    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=err_pipe,
-                         stdin=subprocess.PIPE,
-                         universal_newlines=text)
-    stdout, stderr = p.communicate(input=stdin)
-    elapsed = time.time() - start
-
-    log_verbose('Command took %0.1fs' % elapsed)
-
-    if p.returncode == 0 or ignore_errors:
-        if stderr and not ignore_errors:
-            eprint('`%s` printed to stderr:' % ' '.join(quoted_cmd))
-            eprint(stderr.rstrip())
-        if strip:
-            if text:
-                stdout = stdout.rstrip('\r\n')
-            else:
-                stdout = stdout.rstrip(b'\r\n')
-        if VERBOSE:
-            for l in stdout.splitlines():
-                log_verbose("STDOUT: %s" % l)
-        return stdout
-    err_msg = '`%s` returned %s' % (' '.join(quoted_cmd), p.returncode)
-    eprint(err_msg)
-    if stderr:
-        eprint(stderr.rstrip())
-    if die_on_failure:
-        sys.exit(2)
-    raise RuntimeError(err_msg)
-
-
-def git(*cmd, **kwargs):
-    return shell(['git'] + list(cmd), **kwargs)
-
-
-
-def cannonical(file_path):
-  normalized = os.path.normpath(file_path)
-  dirname = os.path.dirname(normalized)
-  dirname = '.' if dirname is '' else './' + dirname
-  basename = os.path.basename(normalized)
-  return normalized, dirname, basename
-
-
 ### printStatus() ###
 
 printStatusLastBanner = ''
@@ -797,6 +713,18 @@ def printStatus(banner, relname):
     printStatusLastPos = pos
     subdir = relname[:pos] if pos >= 0 else '.'
     print('\033[K' + banner + ': ' + subdir, end='\r', flush=True)
+
+
+### git() ###
+
+dev_null = open(os.devnull, 'w')
+def git(*cmd):
+  p = subprocess.Popen(['git'] + list(cmd), cwd=os.getcwd(),
+                       stdout=subprocess.PIPE, stderr=dev_null,
+                       stdin=subprocess.PIPE, universal_newlines=True)
+  stdout, stderr = p.communicate()
+  stdout = stdout.rstrip('\r\n')
+  return stdout
 
 
 ### populateBaobab() ###
