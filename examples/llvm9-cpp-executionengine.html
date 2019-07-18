@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  body {
+    background: #fff;
+    font-size: 14px;
+    margin: 0px;
+  }
+  svg {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+  }
+  path {
+    stroke: #eee;
+    stroke-width: 0.3;
+  }
+  p {
+    position: absolute;
+    width: 100%;
+    bottom: 0px;
+    margin: 0px;
+    padding: 8px 0px;
+    font-family: monospace;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.5);
+  }
+</style>
+<body>
+<svg id="baobab"></svg>
+<p>git baobab 7b5565418f4 --cpp -filter ExecutionEngine</p>
+<script type="application/json" id="baobab-json">
+{"name": "llvm-project", "modified": 10549, "today": 49763, "children": [
+  {"name": "llvm", "modified": 10549, "today": 49763, "children": [
+    {"name": "bindings", "modified": 8, "today": 127, "children": [
+      {"name": "ocaml", "modified": 8, "today": 127, "children": [
+        {"name": "executionengine", "modified": 8, "today": 127, "children": [
+          {"name": "executionengine_ocaml.c", "modified": 8, "today": 127}
+        ]}
+      ]}
+    ]},
+    {"name": "include", "modified": 2867, "today": 14386, "children": [
+      {"name": "llvm-c", "modified": 8, "today": 200, "children": [
+        {"name": "ExecutionEngine.h", "modified": 8, "today": 200}
+      ]},
+      {"name": "llvm", "modified": 2859, "today": 14186, "children": [
+        {"name": "ExecutionEngine", "modified": 2859, "today": 14186, "children": [
+          {"name": "ExecutionEngine.h", "modified": 20, "today": 677},
+          {"name": "GenericValue.h", "modified": 7, "today": 54},
+          {"name": "Interpreter.h", "modified": 7, "today": 27},
+          {"name": "JITEventListener.h", "modified": 7, "today": 117},
+          {"name": "JITLink", "modified": 1202, "today": 1202, "children": [
+            {"name": "EHFrameSupport.h", "modified": 80, "today": 80},
+            {"name": "JITLink.h", "modified": 930, "today": 930},
+            {"name": "JITLinkMemoryManager.h", "modified": 99, "today": 99},
+            {"name": "MachO.h", "modified": 30, "today": 30},
+            {"name": "MachO_x86_64.h", "modified": 63, "today": 63}
+          ]},
+          {"name": "JITSymbol.h", "modified": 34, "today": 390},
+          {"name": "MCJIT.h", "modified": 7, "today": 37},
+          {"name": "OProfileWrapper.h", "modified": 7, "today": 123},
+          {"name": "ObjectCache.h", "modified": 7, "today": 41},
+          {"name": "Orc", "modified": 1388, "today": 10618, "children": [
+            {"name": "CompileOnDemandLayer.h", "modified": 52, "today": 765},
+            {"name": "CompileUtils.h", "modified": 95, "today": 94},
+            {"name": "Core.h", "modified": 228, "today": 992},
+            {"name": "ExecutionUtils.h", "modified": 52, "today": 279},
+            {"name": "GlobalMappingLayer.h", "modified": 7, "today": 111},
+            {"name": "IRCompileLayer.h", "modified": 27, "today": 145},
+            {"name": "IRTransformLayer.h", "modified": 26, "today": 127},
+            {"name": "IndirectionUtils.h", "modified": 11, "today": 493},
+            {"name": "JITTargetMachineBuilder.h", "modified": 7, "today": 129},
+            {"name": "LLJIT.h", "modified": 230, "today": 335},
+            {"name": "LambdaResolver.h", "modified": 34, "today": 83},
+            {"name": "Layer.h", "modified": 7, "today": 166},
+            {"name": "LazyEmittingLayer.h", "modified": 24, "today": 271},
+            {"name": "LazyReexports.h", "modified": 7, "today": 194},
+            {"name": "Legacy.h", "modified": 18, "today": 215},
+            {"name": "NullResolver.h", "modified": 7, "today": 43},
+            {"name": "ObjectLinkingLayer.h", "modified": 165, "today": 165},
+            {"name": "ObjectTransformLayer.h", "modified": 23, "today": 127},
+            {"name": "OrcABISupport.h", "modified": 7, "today": 314},
+            {"name": "OrcError.h", "modified": 7, "today": 70},
+            {"name": "OrcRemoteTargetClient.h", "modified": 7, "today": 702},
+            {"name": "OrcRemoteTargetRPCAPI.h", "modified": 7, "today": 375},
+            {"name": "OrcRemoteTargetServer.h", "modified": 13, "today": 449},
+            {"name": "RPCSerialization.h", "modified": 93, "today": 703},
+            {"name": "RPCUtils.h", "modified": 25, "today": 1677},
+            {"name": "RTDyldObjectLinkingLayer.h", "modified": 50, "today": 482},
+            {"name": "RawByteChannel.h", "modified": 7, "today": 184},
+            {"name": "RemoteObjectLayer.h", "modified": 60, "today": 569},
+            {"name": "SymbolStringPool.h", "modified": 85, "today": 197},
+            {"name": "ThreadSafeModule.h", "modified": 7, "today": 162}
+          ]},
+          {"name": "OrcMCJITReplacement.h", "modified": 7, "today": 37},
+          {"name": "OrcV1Deprecation.h", "modified": 22, "today": 22},
+          {"name": "RTDyldMemoryManager.h", "modified": 7, "today": 158},
+          {"name": "RuntimeDyld.h", "modified": 32, "today": 305},
+          {"name": "RuntimeDyldChecker.h", "modified": 98, "today": 184},
+          {"name": "SectionMemoryManager.h", "modified": 7, "today": 194}
+        ]}
+      ]}
+    ]},
+    {"name": "lib", "modified": 6269, "today": 27821, "children": [
+      {"name": "ExecutionEngine", "modified": 6269, "today": 27821, "children": [
+        {"name": "ExecutionEngine.cpp", "modified": 60, "today": 1309},
+        {"name": "ExecutionEngineBindings.cpp", "modified": 7, "today": 436},
+        {"name": "GDBRegistrationListener.cpp", "modified": 7, "today": 238},
+        {"name": "IntelJITEvents", "modified": 56, "today": 1613, "children": [
+          {"name": "IntelJITEventListener.cpp", "modified": 21, "today": 258},
+          {"name": "IntelJITEventsWrapper.h", "modified": 7, "today": 95},
+          {"name": "ittnotify_config.h", "modified": 7, "today": 453},
+          {"name": "ittnotify_types.h", "modified": 7, "today": 69},
+          {"name": "jitprofiling.c", "modified": 7, "today": 480},
+          {"name": "jitprofiling.h", "modified": 7, "today": 258}
+        ]},
+        {"name": "Interpreter", "modified": 85, "today": 3018, "children": [
+          {"name": "Execution.cpp", "modified": 63, "today": 2172},
+          {"name": "ExternalFunctions.cpp", "modified": 7, "today": 509},
+          {"name": "Interpreter.cpp", "modified": 7, "today": 102},
+          {"name": "Interpreter.h", "modified": 8, "today": 235}
+        ]},
+        {"name": "JITLink", "modified": 2947, "today": 2947, "children": [
+          {"name": "BasicGOTAndStubsBuilder.h", "modified": 82, "today": 82},
+          {"name": "EHFrameSupport.cpp", "modified": 544, "today": 544},
+          {"name": "EHFrameSupportImpl.h", "modified": 72, "today": 72},
+          {"name": "JITLink.cpp", "modified": 172, "today": 172},
+          {"name": "JITLinkGeneric.cpp", "modified": 481, "today": 481},
+          {"name": "JITLinkGeneric.h", "modified": 256, "today": 256},
+          {"name": "JITLinkMemoryManager.cpp", "modified": 105, "today": 105},
+          {"name": "MachO.cpp", "modified": 78, "today": 78},
+          {"name": "MachOAtomGraphBuilder.cpp", "modified": 411, "today": 411},
+          {"name": "MachOAtomGraphBuilder.h", "modified": 138, "today": 138},
+          {"name": "MachO_x86_64.cpp", "modified": 608, "today": 608}
+        ]},
+        {"name": "MCJIT", "modified": 14, "today": 1022, "children": [
+          {"name": "MCJIT.cpp", "modified": 7, "today": 679},
+          {"name": "MCJIT.h", "modified": 7, "today": 343}
+        ]},
+        {"name": "OProfileJIT", "modified": 14, "today": 455, "children": [
+          {"name": "OProfileJITEventListener.cpp", "modified": 7, "today": 188},
+          {"name": "OProfileWrapper.cpp", "modified": 7, "today": 267}
+        ]},
+        {"name": "Orc", "modified": 2206, "today": 7037, "children": [
+          {"name": "CompileOnDemandLayer.cpp", "modified": 7, "today": 302},
+          {"name": "CompileUtils.cpp", "modified": 86, "today": 86},
+          {"name": "Core.cpp", "modified": 1022, "today": 1920},
+          {"name": "ExecutionUtils.cpp", "modified": 32, "today": 230},
+          {"name": "IRCompileLayer.cpp", "modified": 7, "today": 43},
+          {"name": "IRTransformLayer.cpp", "modified": 7, "today": 33},
+          {"name": "IndirectionUtils.cpp", "modified": 15, "today": 371},
+          {"name": "JITTargetMachineBuilder.cpp", "modified": 7, "today": 54},
+          {"name": "LLJIT.cpp", "modified": 262, "today": 226},
+          {"name": "Layer.cpp", "modified": 17, "today": 183},
+          {"name": "LazyReexports.cpp", "modified": 20, "today": 204},
+          {"name": "Legacy.cpp", "modified": 10, "today": 66},
+          {"name": "NullResolver.cpp", "modified": 7, "today": 37},
+          {"name": "ObjectLinkingLayer.cpp", "modified": 483, "today": 483},
+          {"name": "ObjectTransformLayer.cpp", "modified": 7, "today": 33},
+          {"name": "OrcABISupport.cpp", "modified": 17, "today": 983},
+          {"name": "OrcCBindings.cpp", "modified": 7, "today": 158},
+          {"name": "OrcCBindingsStack.h", "modified": 64, "today": 533},
+          {"name": "OrcError.cpp", "modified": 7, "today": 115},
+          {"name": "OrcMCJITReplacement.cpp", "modified": 10, "today": 138},
+          {"name": "OrcMCJITReplacement.h", "modified": 32, "today": 501},
+          {"name": "RPCUtils.cpp", "modified": 7, "today": 54},
+          {"name": "RTDyldObjectLinkingLayer.cpp", "modified": 66, "today": 220},
+          {"name": "ThreadSafeModule.cpp", "modified": 7, "today": 64}
+        ]},
+        {"name": "PerfJITEvents", "modified": 27, "today": 503, "children": [
+          {"name": "PerfJITEventListener.cpp", "modified": 27, "today": 503}
+        ]},
+        {"name": "RuntimeDyld", "modified": 805, "today": 8873, "children": [
+          {"name": "JITSymbol.cpp", "modified": 7, "today": 131},
+          {"name": "RTDyldMemoryManager.cpp", "modified": 16, "today": 303},
+          {"name": "RuntimeDyld.cpp", "modified": 147, "today": 1422},
+          {"name": "RuntimeDyldCOFF.cpp", "modified": 7, "today": 82},
+          {"name": "RuntimeDyldCOFF.h", "modified": 7, "today": 48},
+          {"name": "RuntimeDyldChecker.cpp", "modified": 354, "today": 875},
+          {"name": "RuntimeDyldCheckerImpl.h", "modified": 59, "today": 74},
+          {"name": "RuntimeDyldELF.cpp", "modified": 10, "today": 1938},
+          {"name": "RuntimeDyldELF.h", "modified": 9, "today": 189},
+          {"name": "RuntimeDyldImpl.h", "modified": 55, "today": 586},
+          {"name": "RuntimeDyldMachO.cpp", "modified": 7, "today": 377},
+          {"name": "RuntimeDyldMachO.h", "modified": 7, "today": 167},
+          {"name": "Targets", "modified": 120, "today": 2681, "children": [
+            {"name": "RuntimeDyldCOFFI386.h", "modified": 15, "today": 217},
+            {"name": "RuntimeDyldCOFFThumb.h", "modified": 28, "today": 315},
+            {"name": "RuntimeDyldCOFFX86_64.h", "modified": 23, "today": 305},
+            {"name": "RuntimeDyldELFMips.cpp", "modified": 7, "today": 320},
+            {"name": "RuntimeDyldELFMips.h", "modified": 7, "today": 67},
+            {"name": "RuntimeDyldMachOAArch64.h", "modified": 9, "today": 541},
+            {"name": "RuntimeDyldMachOARM.h", "modified": 11, "today": 429},
+            {"name": "RuntimeDyldMachOI386.h", "modified": 9, "today": 248},
+            {"name": "RuntimeDyldMachOX86_64.h", "modified": 11, "today": 239}
+          ]}
+        ]},
+        {"name": "SectionMemoryManager.cpp", "modified": 34, "today": 267},
+        {"name": "TargetSelect.cpp", "modified": 7, "today": 103}
+      ]}
+    ]},
+    {"name": "unittests", "modified": 1405, "today": 7429, "children": [
+      {"name": "ExecutionEngine", "modified": 1405, "today": 7429, "children": [
+        {"name": "ExecutionEngineTest.cpp", "modified": 7, "today": 151},
+        {"name": "JITLink", "modified": 685, "today": 685, "children": [
+          {"name": "JITLinkTestCommon.cpp", "modified": 251, "today": 251},
+          {"name": "JITLinkTestCommon.h", "modified": 205, "today": 205},
+          {"name": "MachO_x86_64_Tests.cpp", "modified": 229, "today": 229}
+        ]},
+        {"name": "MCJIT", "modified": 55, "today": 2056, "children": [
+          {"name": "MCJITCAPITest.cpp", "modified": 7, "today": 507},
+          {"name": "MCJITMemoryManagerTest.cpp", "modified": 7, "today": 169},
+          {"name": "MCJITMultipleModuleTest.cpp", "modified": 11, "today": 425},
+          {"name": "MCJITObjectCacheTest.cpp", "modified": 7, "today": 228},
+          {"name": "MCJITTest.cpp", "modified": 9, "today": 294},
+          {"name": "MCJITTestAPICommon.h", "modified": 7, "today": 100},
+          {"name": "MCJITTestBase.h", "modified": 7, "today": 333}
+        ]},
+        {"name": "Orc", "modified": 658, "today": 4537, "children": [
+          {"name": "CoreAPIsTest.cpp", "modified": 333, "today": 912},
+          {"name": "GlobalMappingLayerTest.cpp", "modified": 7, "today": 62},
+          {"name": "IndirectionUtilsTest.cpp", "modified": 7, "today": 49},
+          {"name": "JITTargetMachineBuilderTest.cpp", "modified": 7, "today": 51},
+          {"name": "LazyCallThroughAndReexportsTest.cpp", "modified": 4, "today": 75},
+          {"name": "LazyEmittingLayerTest.cpp", "modified": 10, "today": 31},
+          {"name": "LegacyAPIInteropTest.cpp", "modified": 42, "today": 123},
+          {"name": "LegacyCompileOnDemandLayerTest.cpp", "modified": 9, "today": 88},
+          {"name": "LegacyRTDyldObjectLinkingLayerTest.cpp", "modified": 42, "today": 293},
+          {"name": "ObjectTransformLayerTest.cpp", "modified": 40, "today": 320},
+          {"name": "OrcCAPITest.cpp", "modified": 7, "today": 219},
+          {"name": "OrcTestCommon.cpp", "modified": 7, "today": 29},
+          {"name": "OrcTestCommon.h", "modified": 7, "today": 276},
+          {"name": "QueueChannel.cpp", "modified": 7, "today": 13},
+          {"name": "QueueChannel.h", "modified": 7, "today": 145},
+          {"name": "RPCUtilsTest.cpp", "modified": 7, "today": 883},
+          {"name": "RTDyldObjectLinkingLayerTest.cpp", "modified": 30, "today": 233},
+          {"name": "RemoteObjectLayerTest.cpp", "modified": 71, "today": 588},
+          {"name": "SymbolStringPoolTest.cpp", "modified": 7, "today": 53},
+          {"name": "ThreadSafeModuleTest.cpp", "modified": 7, "today": 94}
+        ]}
+      ]}
+    ]}
+  ]}
+]}
+</script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+if (!String.format) {
+  String.format = function(format) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return format.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number] 
+        : match
+      ;
+    });
+  };
+}
+
+const baobab = {};
+baobab.data = JSON.parse(document.getElementById("baobab-json").innerHTML);
+
+// Define SVG coords with center in page center
+const viewBox = { left: -50, top: -50, width: 100, height: 100 };
+viewBox.radius = Math.min(viewBox.width, viewBox.height) / 2;
+viewBox.right = viewBox.left + viewBox.width;
+viewBox.bottom = viewBox.top + viewBox.height;
+
+document.getElementById("baobab").setAttribute("viewBox", 
+  String.format("{0} {1} {2} {3}", viewBox.left, viewBox.top, 
+                                   viewBox.width, viewBox.height));
+
+// View-related parameters
+baobab.strokeWidth = viewBox.radius / 750;
+baobab.globalFontSizeMax = viewBox.radius / 10;
+baobab.globalFontSizeMin = viewBox.radius / 50;
+
+function basename(path) {
+  return path.substr(path.lastIndexOf('/') + 1);
+}
+
+function concatPath(d) {
+  var path = d.data.name;
+  for (var p = d.parent; p; p = p.parent) {
+    path = p.data.name + "/" + path;
+  }
+  return path;
+}
+
+function tooltipFormat(d) {
+  return String.format(
+    "{0}\n{1} lines modified\n{2} lines today",
+    concatPath(d), humanReadable(d.data.modified), humanReadable(d.data.today));
+}
+
+function humanReadable(val) {
+  if (val > 1000000)
+    return Math.round(val / 100000) / 10 + 'M';
+  else if (val > 1000)
+    return Math.round(val / 100) / 10 + 'K';
+  else
+    return val;
+}
+
+function toHex(n) {
+  const s = Math.round(n).toString(16);
+  return s.length == 1 ? "0" + s : s;
+};
+
+function colorRatioSquareScale(d) {
+  return (d.today == 0) ? 1 : Math.sqrt(d.modified) / Math.sqrt(d.today);
+}
+
+function colorHotCold(d) {
+  const ratio = Math.min(1, colorRatioSquareScale(d));
+  const base = 16 * 3 + 3;
+  const hot = base + (255 - base) * ratio;
+  const cold = base + (255 - base) * (1 - ratio);
+  return String.format("#{0}{1}{2}", toHex(hot), "88", toHex(cold));
+}
+
+const partition = json_data => {
+  const root = d3.hierarchy(json_data).sum(node_data => {
+    return node_data.children ? node_data.modifiedInvisible : node_data.modified;
+  })
+  .sort((a, b) => {
+    return b.data.modified - a.data.modified;
+  });
+
+  var p = d3.partition().size([2 * Math.PI, root.height]);
+  return p(root);
+}
+
+function makeViewCoords(dx0, dx1, dd) {
+  const twoPi = 2 * Math.PI;
+  const x0inbounds = 0 < dx0 && dx0 < twoPi;
+  const x1inbounds = 0 < dx1 && dx1 < twoPi;
+  const fullCircle = dx0 <= 0 && twoPi <= dx1;
+  if (x0inbounds || x1inbounds || fullCircle)
+    return {
+      x0: Math.max(0, dx0), x1: Math.min(twoPi, dx1), y0: dd, y1: dd + 1
+    };
+
+  // Global invariant: (y1 == 0) implies invisible
+  return { x0: 0, x1: 0, y0: 0, y1: 0 };
+}
+
+const root = partition(baobab.data);
+root.each(d => {
+  d.view = makeViewCoords(d.x0, d.x1, d.depth);
+  if (d.children) {
+    // Only leafs (files) have a size, but as zeros are filtered out,
+    // their sizes in the invisible category would be missed.
+    d.todayInvisible = d.today - d.children.reduce(
+      (sum, child) => sum + child.today
+    );
+    d.modifiedInvisible = d.modified - d.children.reduce(
+      (sum, child) => sum + child.modified
+    );
+  }
+});
+
+function makeScaleY(viewRoot) {
+  return d3.scaleLog().domain([1, viewRoot.height + 1]).range([15, viewBox.radius]);
+}
+
+var scale_y = makeScaleY(root);
+
+function rad2deg(rad) {
+  return rad * 90 / Math.PI;
+}
+
+function labelTransform(d) {
+  // Not sure where this edge case comes from,
+  // but it produces Infs on log scale.
+  if (d.view.y0 + d.view.y1 <= 1 || !d.padding)
+      return ``;
+
+  var x = rad2deg(d.view.x0 + d.view.x1);
+  var y = scale_y(d.view.y0) + d.padding + d.fontSize / 2;
+  if (x >= 90 && x <= 270) {
+    return `rotate(${x + 180}) translate(0, ${y})`;
+  } else {
+    return `rotate(${x}) translate(0, ${-y})`;
+  }
+}
+
+const arc = d3.arc()
+  .startAngle(d => d.view.x0)
+  .endAngle(d => d.view.x1)
+  .innerRadius(d => scale_y(d.view.y0))
+  .outerRadius(d => scale_y(d.view.y1));
+
+const svg = d3.select('#baobab')
+  .style("font", "sans-serif");
+
+baobab.canvas = svg.append("g");
+
+baobab.arcShapes = baobab.canvas.append("g")
+  .selectAll("path")
+  .data(root.descendants().slice(1))
+  .join("path")
+  .attr("d", d => arc(d))
+  .style("stroke-width", baobab.strokeWidth);
+
+baobab.arcShapes
+  .filter(d => d.view.y1 > 0)
+  .attr("stroke-opacity", 1)
+  .attr("fill-opacity", 1)
+  .attr("fill", d => colorHotCold(d.data));
+
+baobab.arcShapes
+  .filter(d => d.view.y1 == 0)
+  .attr("stroke-opacity", 0)
+  .attr("fill-opacity", 0);
+
+baobab.arcShapes
+  .filter(d => d.children)
+  .style("cursor", "pointer")
+  .on("click", clicked);
+
+baobab.arcToolTips = baobab.arcShapes.append("title")
+  .text(d => tooltipFormat(d));
+
+function balanceProportions(rr, tr) {
+  var max = Math.PI / 2;
+  var min = 0;
+  // Find zero approximately. Should be 8 bisects.
+  while (max > min + 0.01) {
+    const pivot = (min + max) / 2;
+    if (Math.sin(pivot) - rr - (2 * Math.cos(pivot)) / tr > 0) {
+      max = pivot;
+    } else {
+      min = pivot;
+    }
+  }
+  return min;
+}
+
+function fitTextToArc(arcSpec, textRatio) {
+  const boundsDistance = (fontSize) => {
+    const legX = (fontSize * textRatio) / 2;
+    const legY = arcSpec.innerRadius + fontSize;
+    const hypotenuse = Math.sqrt(Math.pow(legX, 2) + Math.pow(legY, 2));
+    return arcSpec.outerRadius - hypotenuse;
+  };
+
+  // Choose font-size that likely fits in the arc. Works for most cases.
+  const desiredFontSize =
+      Math.max(baobab.globalFontSizeMin,
+               Math.min(arcSpec.height / 2,
+                        arcSpec.innerLength * 0.9 / textRatio,
+                        baobab.globalFontSizeMax));
+  const totalPadding = boundsDistance(desiredFontSize);
+  const innerTextAngle = Math.atan((desiredFontSize * textRatio) /
+                                   (2 * arcSpec.innerRadius + totalPadding));
+  if (totalPadding > 0 && innerTextAngle < arcSpec.centralAngle / 2)
+    return [desiredFontSize, totalPadding / 2];
+
+  // Choose acceptable padding and determine matching font-size.
+  const desiredPadding = arcSpec.height * 0.1;
+  const radiusRatio = (arcSpec.innerRadius + desiredPadding) /
+                      (arcSpec.outerRadius - desiredPadding);
+  const outerTextAngle = balanceProportions(radiusRatio, textRatio);
+  const matchingFontSize = arcSpec.outerRadius * (Math.sin(outerTextAngle) - radiusRatio);
+  if (matchingFontSize > baobab.globalFontSizeMin &&
+      outerTextAngle < arcSpec.centralAngle / 2) {
+    const actualPadding = boundsDistance(matchingFontSize);
+    const actualFontSize = Math.min(matchingFontSize, baobab.globalFontSizeMax);
+    if (actualPadding > 0)
+      return [actualFontSize, actualPadding / 2];
+  }
+
+  if (desiredFontSize > baobab.globalFontSizeMin) {
+    const minTotalPadding = boundsDistance(baobab.globalFontSizeMin);
+    const innerTextAngle = Math.atan((baobab.globalFontSizeMin * textRatio) /
+                                     (2 * arcSpec.innerRadius + minTotalPadding));
+    if (minTotalPadding > 0 && innerTextAngle < arcSpec.centralAngle / 2)
+      return [baobab.globalFontSizeMin, minTotalPadding / 2];
+  }
+
+  // All approaches failed. Hide label and log error in caller.
+  return [0.001, 0];
+}
+
+function makeArcSpec(view) {
+  const spec = {};
+  //console.assert(view.y0 == view.y1 - 1, "Integral Y-scale increments");
+  //console.assert(0 <= view.x0 && view.x0 <= view.x1 && view.x1 <= 2 * Math.PI,
+  //               "X-scale in radians");
+
+  spec.innerRadius = scale_y(view.y0);
+  spec.outerRadius = scale_y(view.y1);
+  spec.centralAngle = view.x1 - view.x0;
+  spec.innerLength = spec.centralAngle * spec.innerRadius;
+  spec.height = spec.outerRadius - spec.innerRadius;
+
+  //console.assert(spec.outerRadius <= viewBox.radius, "Radius exceeding bounds");
+  //console.assert(spec.innerLength < 2 * Math.PI * viewBox.radius &&
+  //               spec.innerLength >= 0, "Invalid inner arc length");
+  return spec;
+}
+
+function labelFontSizeArc(d) {
+  [ d.fontSize, d.padding ] = fitTextToArc(makeArcSpec(d.view), d.textRatio);
+  if (d.fontSize <= 0.001)
+    console.log("Failed to determine font-size to fit: %s", d.data.name);
+
+  return d.fontSize + "px";
+}
+
+function labelVisible(d) {
+  // Invisible arc.
+  if (d.view.y1 == 0)
+    return false;
+
+  // No way to fit in text.
+  const arcSpec = makeArcSpec(d.view);
+  if (baobab.globalFontSizeMin > arcSpec.height / 2 ||
+      baobab.globalFontSizeMin * d.textRatio > arcSpec.outerRadius)
+    return false;
+
+  return true;
+}
+
+function labelFontSizeRoot(element, d) {
+  // Constant size, variable content. Initial font-size is 14px.
+  const textRatio = (d.fontSize || 14) / element.getComputedTextLength();
+  const matchingFontSize = 2 * scale_y(1) * textRatio * 0.9;
+  d.fontSize = Math.min(matchingFontSize, baobab.globalFontSizeMax);
+  return d.fontSize + "px";
+}
+
+baobab.arcLabels = baobab.canvas.append("g")
+  .attr("pointer-events", "none")
+  .style("fill", "#333")
+  .selectAll("text")
+  .data(root.descendants().slice(1))
+  .join("text")
+  .attr("text-anchor", "middle")
+  .attr("dominant-baseline", "central")
+  .attr("font-family", "sans-serif")
+  .text(d => d.data.name);
+
+// Calculate ratio of text-width to font-size once, based on initial 14px
+// font-size. Ratio is constant because arc label content is fixed.
+baobab.arcLabels.each(function(d) {
+  d.textRatio = this.getComputedTextLength() / 14;
+});
+
+baobab.arcLabels
+  .filter(d => labelVisible(d))
+  .attr("fill-opacity", 1)
+  .attr("font-size", d => labelFontSizeArc(d))
+  .attr("transform", d => labelTransform(d))
+  .on("click", clicked);
+
+baobab.arcLabels
+  .filter(d => !labelVisible(d))
+  .attr("fill-opacity", 0);
+
+baobab.rootShape = baobab.canvas.append("circle")
+  .datum(root)
+  .attr("r", scale_y(1))
+  .attr("fill", "#eee")
+  .attr("fill-opacity", 0.6)
+  .attr("pointer-events", "all")
+  .style("cursor", "default")
+  .on("click", p => clicked(p.parent));
+
+baobab.rootToolTip = baobab.rootShape.append("title")
+  .text(d => tooltipFormat(d));
+
+baobab.rootLabel = baobab.canvas.append("text")
+  .datum(root)
+  .text(d => concatPath(d))
+  .attr("pointer-events", "none")
+  .attr("fill", "#333")
+  .attr("text-anchor", "middle")
+  .attr("dominant-baseline", "central")
+  .attr("font-family", "sans-serif")
+  .style("font-size", function(d) {
+    return labelFontSizeRoot(this, d);
+  });
+
+function clicked(item) {
+  const r = item || root;
+  scale_y = makeScaleY(r);
+
+  baobab.rootShape
+    .datum(r)
+    .style("cursor", r.parent ? "pointer" :  "default");
+
+  baobab.rootLabel
+    .text(concatPath(r))
+    .style("font-size", function(d) {
+      return labelFontSizeRoot(this, d);
+    });
+  
+  baobab.rootToolTip
+    .text(d => tooltipFormat(d));
+
+  const twoPi = 2 * Math.PI;
+  const reciprocalDiffRootX = 1 / (r.x1 - r.x0);
+  const makeSubviewCoords = (dx0, dx1, dd) => {
+    const nd = dd - r.depth;
+    if (nd > 0) {
+      const nx0 = (dx0 - r.x0) * reciprocalDiffRootX;
+      const nx1 = (dx1 - r.x0) * reciprocalDiffRootX;
+      const x0inbounds = 0 < nx0 && nx0 < 1;
+      const x1inbounds = 0 < nx1 && nx1 < 1;
+      const fullCircle = nx0 <= 0 && 1 <= nx1;
+      if (x0inbounds || x1inbounds || fullCircle)
+        return {
+          x0: Math.max(0, nx0) * twoPi,
+          x1: Math.min(1, nx1) * twoPi,
+          y0: nd,
+          y1: nd + 1
+        };
+    }
+
+    // Global invariant: (y1 == 0) implies invisible
+    return { x0: 0, x1: 0, y0: 0, y1: 0 };
+  };
+
+  root.each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth));
+
+  baobab.arcShapes
+    .attr("d", d => arc(d))
+    .attr("fill-opacity", d => (d.view.y1 > 0) ? 1 : 0)
+    .attr("stroke-opacity", d => (d.view.y1 > 0) ? 1 : 0);
+
+  baobab.arcLabels
+    .filter(d => labelVisible(d))
+    .attr("fill-opacity", 1)
+    .attr("font-size", d => labelFontSizeArc(d))
+    .attr("transform", d => labelTransform(d));
+
+  baobab.arcLabels
+    .filter(d => !labelVisible(d))
+    .attr("fill-opacity", 0);
+}
+
+var regex = /[?&]([^=#]+)=([^&#]*)/g,
+    url = window.location.href,
+    params = {},
+    match;
+while(match = regex.exec(url)) {
+  params[match[1]] = match[2];
+}
+
+if (params["path"]) {
+  var path = params["path"].split("/");
+  var select = root;
+  for (var i = 1; i < path.length; i++) {
+    const child = select.children.find(node => node.data["name"] == path[i]);
+    if (child && child["children"])
+      select = child
+    else
+      break;
+  }
+  clicked(select);
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<script>
+function showOnGithub(d) {
+  const repoUrl = "github.com/llvm/llvm-project";
+  const commitRange = "7b5565418f4..2cf681a11aea459b50d712abc7136f7129e4d57f";
+  const anchorId = md5(d.data.name.substr(2));
+  const url = String.format("https://{0}/compare/{1}#diff-{2}",
+                            repoUrl, commitRange, anchorId);
+  window.open(url, '_blank');
+}
+
+baobab.arcShapes
+  .filter(d => !d.children)
+  .style("cursor", "pointer")
+  .on("click", d => showOnGithub(d));
+</script>
