@@ -479,12 +479,9 @@ if (params["path"]) {
 d3_openFileDiffsOnGithub = """
 <script>
 function showOnGithub(d) {
-  const repoUrl = "${github_remote}";
-  const commitRange = "${sha_from}^..${sha_to}";
-  const anchorId = md5(d.data.name.substr(2));
-  const url = String.format("https://{0}/compare/{1}#diff-{2}",
-                            repoUrl, commitRange, anchorId);
-  window.open(url, '_blank');
+  const url = "https://${github_remote}/compare/${sha_from}..${sha_to}#diff-";
+  const relPath = concatPath(d).slice(${root_name_len} + 1); // account for slash
+  window.open(url + md5(relPath), '_blank');
 }
 
 baobab.arcShapes
@@ -974,7 +971,8 @@ def renderHtml(baobab, githubUrl):
   if githubUrl:
     outs.write('<script src="{0}"></script>'.format(args.md5js))
     outs.write(jspp(d3_openFileDiffsOnGithub).format(
-      github_remote=githubUrl, sha_from=args.since, sha_to=head
+      github_remote=githubUrl, sha_from=args.since, sha_to=head,
+      root_name_len=len(baobab['name'])
     ))
 
   outs.close()
@@ -983,7 +981,7 @@ def renderHtml(baobab, githubUrl):
 
 ### main() ###
 
-parse_remote_github = re.compile(r'^.*\w.*(github\.com/.*/.*)\.git.*')
+parse_remote_github = re.compile(r'^.*\w.*(github\.com/.*/.*)(\.git)? \(fetch\)')
 def parseRemoteGithub():
   remotes_string = git('remote', '-v')
   remotes_lines = remotes_string.split('\n')
