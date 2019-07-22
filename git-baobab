@@ -432,6 +432,19 @@ showOnGithubHtml = """
 </script>
 """
 
+rootInfoLabelJs = """
+  baobab.${name} = baobab.canvas.append("text")
+    .datum(root)
+    .attr("pointer-events", "${pointer_events}")
+    .attr("dy", "${dy}")
+    .attr("fill", "${fill}")
+    .attr("text-anchor", "middle")
+    .attr("font-family", "sans-serif")
+    .style("font-size", "1.6px")
+    .text("${text}");
+""";
+
+
 parse_remote_github = re.compile(r'^.*\w.*(github\.com/.*/.*)(\.git)? \(fetch\)')
 def parseRemoteGithub():
   remotes_string = git('remote', '-v')
@@ -442,7 +455,7 @@ def parseRemoteGithub():
       return res.group(1)
   return ''
 
-def renderHtml(baobab):
+def renderHtml(baobab, hashSince, hashHead):
   outs = tempfile.NamedTemporaryFile(mode='w', encoding='utf8', suffix='.html', delete=False)
   print('Export chart to {0}'.format(outs.name))
 
@@ -454,17 +467,30 @@ def renderHtml(baobab):
 
   outs.write('<script src="{0}"></script>\n'.format(args.d3js))
   outs.write('<script>\n')
-  outs.write('const baobab_data =');
+  outs.write('const baobab_data = ');
   writeNodeData(baobab, outs)
   outs.write(';\n')
   outs.write('</script>\n')
   outs.write('<script src="{0}"></script>\n'.format(args.baobabjs))
 
+  infoLabel = jspp(rootInfoLabelJs)
+  outs.write('<script>')
+  outs.write(infoLabel.format(
+    name='rootLabelCommitRange', fill='#333', dy='1.6px', pointer_events='all',
+    text='{0}..{1}'.format(hashSince[:12], hashHead[:12])))
+  outs.write(infoLabel.format(
+    name='rootLabelLinesModified', fill='#aaa', dy='6.1px', pointer_events='none',
+    text='{0} lines inserted / deleted'.format(baobab['modified'])))
+  outs.write(infoLabel.format(
+    name='rootLabelLinesToday', fill='#aaa', dy='8.6px', pointer_events='none',
+    text='{0} lines today'.format(baobab['today'])))
+  outs.write('</script>\n')
+
   githubUrl = parseRemoteGithub()
   if githubUrl:
     outs.write('<script src="{0}"></script>'.format(args.md5js))
     outs.write(jspp(showOnGithubHtml).format(
-      github_remote=githubUrl, sha_from=args.since, sha_to=head,
+      github_remote=githubUrl, sha_from=hashSince, sha_to=hashHead,
       root_name_len=len(baobab['name'])
     ))
 
@@ -509,6 +535,6 @@ if __name__ == '__main__':
   print('{0} lines today, {1} lines changed'.format(
         linesTodayTotal, linesModifiedTotal))
 
-  htmlFileName = renderHtml(baobab)
+  htmlFileName = renderHtml(baobab, hashSince, hashHead)
   if input('Show in browser? [Y/n] ') != 'n':
     webbrowser.open('file://' + htmlFileName)

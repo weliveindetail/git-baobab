@@ -322,7 +322,6 @@ baobab.rootShape = baobab.canvas.append("circle")
   .attr("fill", "#eee")
   .attr("fill-opacity", 0.6)
   .attr("pointer-events", "all")
-  .style("cursor", "default")
   .on("click", p => clicked(p.parent));
 
 baobab.rootToolTip = baobab.rootShape.append("title")
@@ -331,10 +330,9 @@ baobab.rootToolTip = baobab.rootShape.append("title")
 baobab.rootLabel = baobab.canvas.append("text")
   .datum(root)
   .text(d => concatPath(d))
-  .attr("pointer-events", "none")
   .attr("fill", "#333")
   .attr("text-anchor", "middle")
-  .attr("dominant-baseline", "central")
+  .attr("dy", "-1.2px")
   .attr("font-family", "sans-serif")
   .style("font-size", function(d) {
     return labelFontSizeRoot(this, d);
@@ -348,14 +346,22 @@ function clicked(item) {
     .datum(r)
     .style("cursor", r.parent ? "pointer" :  "default");
 
+  baobab.rootToolTip
+    .text(d => tooltipFormat(d));
+
   baobab.rootLabel
     .text(concatPath(r))
     .style("font-size", function(d) {
       return labelFontSizeRoot(this, d);
     });
-  
-  baobab.rootToolTip
-    .text(d => tooltipFormat(d));
+
+  baobab.rootLabelLinesToday
+    .datum(r)
+    .text(d => d.data.t + " lines today");
+
+  baobab.rootLabelLinesModified
+    .datum(r)
+    .text(d => d.data.m + " lines inserted / deleted");
 
   const twoPi = 2 * Math.PI;
   const reciprocalDiffRootX = 1 / (r.x1 - r.x0);
