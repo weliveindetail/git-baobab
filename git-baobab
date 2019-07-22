@@ -169,6 +169,10 @@ parser.add_argument('-filter', metavar='.*', type=str,
   help='Add the given regex to the file filter')
 parser.add_argument('-exclude', metavar='^$', type=str,
   help='Exclude matching files from the file filter')
+parser.add_argument('-v', action='store_true',
+  help='Dump invoked git commands')
+parser.add_argument('-vv', action='store_true',
+  help='Dump invoked git commands and output')
 
 langs = parser.add_argument_group('include files with extensions')
 
@@ -250,12 +254,18 @@ def printStatus(banner, relname):
 ### git() ###
 
 dev_null = open(os.devnull, 'w')
+zeros = re.compile('\x00')
 def git(*cmd):
+  if args.v or args.vv:
+    print('git ' + ' '.join(list(cmd)))
   p = subprocess.Popen(['git'] + list(cmd), cwd=os.getcwd(),
                        stdout=subprocess.PIPE, stderr=dev_null,
                        stdin=subprocess.PIPE, universal_newlines=True)
   stdout, stderr = p.communicate()
   stdout = stdout.rstrip('\r\n')
+  if args.vv:
+    readable = zeros.sub('\n', stdout)
+    print(readable)
   return stdout
 
 
