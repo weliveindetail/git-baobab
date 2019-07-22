@@ -1,7 +1,7 @@
-if (!String.format) {
-  String.format = function(format) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return format.replace(/{(\d+)}/g, function(match, number) { 
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = Array.prototype.slice.call(arguments);
+    return this.replace(/{(\d+)}/g, function(match, number) {
       return typeof args[number] != 'undefined'
         ? args[number] 
         : match
@@ -16,9 +16,10 @@ viewBox.radius = Math.min(viewBox.width, viewBox.height) / 2;
 viewBox.right = viewBox.left + viewBox.width;
 viewBox.bottom = viewBox.top + viewBox.height;
 
-document.getElementById("baobab").setAttribute("viewBox", 
-  String.format("{0} {1} {2} {3}", viewBox.left, viewBox.top, 
-                                    viewBox.width, viewBox.height));
+document.getElementById("baobab").setAttribute(
+  "viewBox", "{0} {1} {2} {3}".format(
+    viewBox.left, viewBox.top,
+    viewBox.width, viewBox.height));
 
 // View-related parameters
 const baobab = {};
@@ -35,8 +36,7 @@ function concatPath(d) {
 }
 
 function tooltipFormat(d) {
-  return String.format(
-    "{0}\\n{1} lines modified\\n{2} lines today",
+  return "{0}\n{1} lines modified\n{2} lines today".format(
     concatPath(d), humanReadable(d.data.m), humanReadable(d.data.t));
 }
 
@@ -63,7 +63,7 @@ function colorHotCold(d) {
   const base = 16 * 3 + 3;
   const hot = base + (255 - base) * ratio;
   const cold = base + (255 - base) * (1 - ratio);
-  return String.format("#{0}{1}{2}", toHex(hot), "88", toHex(cold));
+  return "#{0}88{1}".format(toHex(hot), toHex(cold));
 }
 
 function makeViewCoords(dx0, dx1, dd) {
