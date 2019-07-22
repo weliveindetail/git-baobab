@@ -165,8 +165,6 @@ parser = argparse.ArgumentParser(
   description='git baobab: explore changes in a sunburst chart')
 parser.add_argument('since', metavar='since', type=str,
   help='The git commit to start the analysis from')
-parser.add_argument('-size', metavar='100%%', type=str, default='100%',
-  help='Display size of the resulting image as CSS length value')
 parser.add_argument('-filter', metavar='.*', type=str,
   help='Add the given regex to the file filter')
 parser.add_argument('-exclude', metavar='^$', type=str,
@@ -409,12 +407,6 @@ headerHtml = """
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="${css}">
-<style>
-svg {
-  width: ${width};
-  height: ${height};
-}
-</style>
 """
 
 showOnGithubHtml = """
@@ -460,7 +452,7 @@ def renderHtml(baobab, hashSince, hashHead):
   print('Export chart to {0}'.format(outs.name))
 
   jspp = jsPreprocessor()
-  outs.write(jspp(headerHtml).format(width=args.size, height=args.size, css=args.baobabcss))
+  outs.write(jspp(headerHtml).format(css=args.baobabcss))
   outs.write('<body>\n')
   outs.write('<svg id=\"baobab\"></svg>\n')
   outs.write('<p>git baobab {0}</p>\n'.format(" ".join(sys.argv[1:])))
