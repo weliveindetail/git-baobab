@@ -301,9 +301,8 @@ def baobabInclude(relname):
         return True
   return False
 
-def populateBaobab():
-  head = git('rev-parse', 'HEAD')
-  lstree = git('ls-tree', '--name-only', '-z', '-r', head)
+def populateBaobab(hashHead):
+  lstree = git('ls-tree', '--name-only', '-z', '-r', hashHead)
   trackedFiles = lstree.split('\0')
 
   baobab = createRecord('.')
@@ -321,7 +320,7 @@ def populateBaobab():
         print('No file: ' + relname)
 
   print('Filter matches {0} tracked files'.format(matchedFiles))
-  return baobab, head, linesTodayTotal
+  return baobab, linesTodayTotal
 
 
 ### countModifications() ###
@@ -499,7 +498,7 @@ if __name__ == '__main__':
   hashHead = git('rev-parse', 'HEAD')
   print('Commits {0}..{1}'.format(hashSince[:12], hashHead[:12]))
 
-  baobab, head, linesTodayTotal = populateBaobab()
+  baobab, linesTodayTotal = populateBaobab(hashHead)
   baobab, linesModifiedTotal = countModifications(baobab)
   baobab['name'] = absname[absname.rindex(os.sep)+1:]
 
