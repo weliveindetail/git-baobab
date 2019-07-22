@@ -15,19 +15,20 @@ $ ln -s /path/to/git-baobab/git-baobab /usr/local/bin/git-baobab
 $ git clone https://github.com/llvm/llvm-project.git
 $ cd llvm-project
 $ git rev-parse HEAD
-27ec195f391cf1bcf39fe25f345bc63061566c3c
+2cf681a11aea459b50d712abc7136f7129e4d57f
 $ git merge-base HEAD origin/release/8.x
 7b5565418f4d6e113ba805dad40d471d23bca6f6
-$ git baobab 7b5565418f4 --cpp "/(test|unittest|unittests)/"
-Filter matches 11883 tracked files
-Baobab: 4874226 lines today, 632801 lines changed since commit 7b5565418f4
-Export chart to /var/folders/2k/myk8kt8d4f52dzr19331wtxr0000gn/T/tmpwd8qrcb1.html
+$ git baobab 7b5565418f4 --cpp -exclude "/(test|unittest|unittests)/"
+Commits 7b5565418f4d..2cf681a11aea
+Filter matches 11896 tracked files
+4879337 lines today, 647882 lines changed
+Export chart to /var/folders/2k/myk8kt8d4f52dzr19331wtxr0000gn/T/tmps7oukjk2.html
 Show in browser? [Y/n] y
 ```
 
 Click on the image to open the original interactive output:
 
-[![example-llvm-project](examples/llvm9-cpp-sources.png)](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.html)
+[![example-llvm-project](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.png)](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.html)
 
 The example shows the accumulated changes in C++ files outside tests since Release 8.0 branched on Jan 16, 2019. The size of an arc represents the amount of change in a file/directory relative to its sibling files/directories. The color of an arc indicates the amount of change relative to its line count today. The amount of change is the sum of insertions and deletions.
 
@@ -36,26 +37,20 @@ The example shows the accumulated changes in C++ files outside tests since Relea
 Reduced help page
 
 ```
-usage: git-baobab [-size 100%%] [-filter .*] [-exclude .*]
+usage: git-baobab [-h] [-filter .*] [-exclude .*]
                   [<file extension filters>]
-                  [-d3js https://d3js.org/d3.v5.min.js]
-                  [-md5js https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js]
+                  [<artifact options>]
                   since
 
+git baobab: explore changes in a sunburst chart
+
 positional arguments:
-  since                 git commit to start analysis from
+  since                 The git commit to start the analysis from
 
 optional arguments:
-  -h, --help            Show this help message and exit
-  -size 100%%           Display size of the resulting image as CSS length
-                        value
+  -h                    show this help message and exit
   -filter .*            Add the given regex to the file filter
-  -exclude .*           Exclude matching files from the file filter
-  -d3js https://d3js.org/d3.v5.min.js
-                        URL to custom d3js variant (tested with v5)
-  -md5js https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js
-                        URL to custom script that provides a `md5()` function
-                        (for GitHub integration)
+  -exclude ^$           Exclude matching files from the file filter
 
 include files with extensions:
   --actionscript        as, mxml
@@ -194,4 +189,15 @@ include files with extensions:
   --xml                 xml, dtd, xsl, xslt, xsd, ent, tld, plist, wsdl
   --yaml                yaml, yml
   --cmake               cmake, in (and CMakeLists.txt files)
+
+customize artifacts:
+  -d3js https://d3js.org/d3.v5.min.js
+                        URL to custom d3js variant (tested with v5)
+  -md5js https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js
+                        URL to custom script that provides a `md5()` function
+                        (for GitHub integration)
+  -baobabjs https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.min.js
+                        URL to custom baobab-static.js
+  -baobabcss https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.css
+                        URL to custom baobab-static.css
 ```
