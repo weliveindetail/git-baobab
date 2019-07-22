@@ -357,9 +357,9 @@ def addToRecord(root, relname, lines):
   record['modified'] += lines
   return lines
 
-def countModifications(baobab):
+def countModifications(baobab, hashSince, hashHead):
   printStatusBanner('Fetching stats')
-  stat = git('diff', '--color=never', '--stat=5000,4900', args.since + '..HEAD')
+  stat = git('diff', '--color=never', '--stat=5000,4900', '{0}..{1}'.format(hashSince, hashHead))
   statLines = stat.split('\n')[:-1] # Skip last stat line (summary)
   linesModifiedTotal = 0
 
@@ -527,7 +527,7 @@ if __name__ == '__main__':
   print('Commits {0}..{1}'.format(hashSince[:12], hashHead[:12]))
 
   baobab, linesTodayTotal = populateBaobab(hashHead)
-  baobab, linesModifiedTotal = countModifications(baobab)
+  baobab, linesModifiedTotal = countModifications(baobab, hashSince, hashHead)
   baobab['name'] = absname[absname.rindex(os.sep)+1:]
 
   sumToday, sumModified = sumUp(baobab)
