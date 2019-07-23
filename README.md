@@ -28,7 +28,7 @@ Show in browser? [Y/n] y
 
 Click on the image to open the original interactive output:
 
-[![example-llvm-project](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.png)](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.html)
+[![example-llvm-project](https://weliveindetail.github.io/blog/res/llvm9-cpp-sources-with-margin.png)](https://weliveindetail.github.io/git-baobab/examples/llvm9-cpp-sources.html)
 
 The example shows the accumulated changes in C++ files outside tests since Release 8.0 branched on Jan 16, 2019. The size of an arc represents the amount of change in a file/directory relative to its sibling files/directories. The color of an arc indicates the amount of change relative to its line count today. The amount of change is the sum of insertions and deletions.
 
@@ -51,6 +51,8 @@ optional arguments:
   -h                    show this help message and exit
   -filter .*            Add the given regex to the file filter
   -exclude ^$           Exclude matching files from the file filter
+  -v                    Dump invoked git commands
+  -vv                   Dump invoked git commands and output
 
 include files with extensions:
   --actionscript        as, mxml
