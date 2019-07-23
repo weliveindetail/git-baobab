@@ -403,24 +403,3 @@ function clicked(item) {
     .filter(d => !labelVisible(d))
     .attr("fill-opacity", 0);
 }
-
-var regex = /[?&]([^=#]+)=([^&#]*)/g,
-    url = window.location.href,
-    params = {},
-    match;
-while(match = regex.exec(url)) {
-  params[match[1]] = match[2];
-}
-
-if (params["path"]) {
-  var path = params["path"].split("/");
-  var select = root;
-  for (var i = 1; i < path.length; i++) {
-    const child = select.children.find(node => node.data["name"] == path[i]);
-    if (child && child["children"])
-      select = child
-    else
-      break;
-  }
-  clicked(select);
-}

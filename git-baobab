@@ -165,12 +165,14 @@ parser = argparse.ArgumentParser(
   description='git baobab: explore changes in a sunburst chart')
 parser.add_argument('since', metavar='since', type=str,
   help='The git commit to start the analysis from')
-parser.add_argument('-size', metavar='100%%', type=str, default='100%',
-  help='Display size of the resulting image as CSS length value')
 parser.add_argument('-filter', metavar='.*', type=str,
   help='Add the given regex to the file filter')
 parser.add_argument('-exclude', metavar='^$', type=str,
   help='Exclude matching files from the file filter')
+parser.add_argument('-v', action='store_true',
+  help='Dump invoked git commands')
+parser.add_argument('-vv', action='store_true',
+  help='Dump invoked git commands and output')
 
 langs = parser.add_argument_group('include files with extensions')
 
@@ -252,12 +254,18 @@ def printStatus(banner, relname):
 ### git() ###
 
 dev_null = open(os.devnull, 'w')
+zeros = re.compile('\x00')
 def git(*cmd):
+  if args.v or args.vv:
+    print('git ' + ' '.join(list(cmd)))
   p = subprocess.Popen(['git'] + list(cmd), cwd=os.getcwd(),
                        stdout=subprocess.PIPE, stderr=dev_null,
                        stdin=subprocess.PIPE, universal_newlines=True)
   stdout, stderr = p.communicate()
   stdout = stdout.rstrip('\r\n')
+  if args.vv:
+    readable = zeros.sub('\n', stdout)
+    print(readable)
   return stdout
 
 
@@ -349,9 +357,9 @@ def addToRecord(root, relname, lines):
   record['modified'] += lines
   return lines
 
-def countModifications(baobab):
+def countModifications(baobab, hashSince, hashHead):
   printStatusBanner('Fetching stats')
-  stat = git('diff', '--color=never', '--stat=5000,4900', args.since + '..HEAD')
+  stat = git('diff', '--color=never', '--stat=5000,4900', '{0}..{1}'.format(hashSince, hashHead))
   statLines = stat.split('\n')[:-1] # Skip last stat line (summary)
   linesModifiedTotal = 0
 
@@ -409,12 +417,6 @@ headerHtml = """
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="${css}">
-<style>
-svg {
-  width: ${width};
-  height: ${height};
-}
-</style>
 """
 
 showOnGithubHtml = """
@@ -444,6 +446,33 @@ rootInfoLabelJs = """
     .text("${text}");
 """;
 
+navigateOnLoadHtml = """
+<script>
+(function() {
+  var regex = /[?&]([^=#]+)=([^&#]*)/g,
+      url = window.location.href,
+      params = {},
+      match;
+  while(match = regex.exec(url)) {
+    params[match[1]] = match[2];
+  }
+
+  if (params["path"]) {
+    var path = params["path"].split("/");
+    var select = root;
+    for (var i = 1; i < path.length; i++) {
+      const child = select.children.find(node => node.data["n"] == path[i]);
+      if (child && child["children"])
+        select = child
+      else
+        break;
+    }
+    clicked(select);
+  }
+})();
+</script>
+"""
+
 
 parse_remote_github = re.compile(r'^.*\w.*(github\.com/.*/.*)(\.git)? \(fetch\)')
 def parseRemoteGithub():
@@ -460,7 +489,7 @@ def renderHtml(baobab, hashSince, hashHead):
   print('Export chart to {0}'.format(outs.name))
 
   jspp = jsPreprocessor()
-  outs.write(jspp(headerHtml).format(width=args.size, height=args.size, css=args.baobabcss))
+  outs.write(jspp(headerHtml).format(css=args.baobabcss))
   outs.write('<body>\n')
   outs.write('<svg id=\"baobab\"></svg>\n')
   outs.write('<p>git baobab {0}</p>\n'.format(" ".join(sys.argv[1:])))
@@ -494,6 +523,7 @@ def renderHtml(baobab, hashSince, hashHead):
       root_name_len=len(baobab['name'])
     ))
 
+  outs.write(navigateOnLoadHtml)
   outs.write('</body>\n')
   outs.close()
   return outs.name
@@ -525,7 +555,7 @@ if __name__ == '__main__':
   print('Commits {0}..{1}'.format(hashSince[:12], hashHead[:12]))
 
   baobab, linesTodayTotal = populateBaobab(hashHead)
-  baobab, linesModifiedTotal = countModifications(baobab)
+  baobab, linesModifiedTotal = countModifications(baobab, hashSince, hashHead)
   baobab['name'] = absname[absname.rindex(os.sep)+1:]
 
   sumToday, sumModified = sumUp(baobab)
