@@ -309,13 +309,12 @@ def baobabInclude(relname):
         return True
   return False
 
-def populateBaobab(hashHead):
-  lstree = git('ls-tree', '--name-only', '-z', '-r', hashHead)
-  trackedFiles = lstree.split('\0')
-
-  baobab = createRecord('.')
+def populateBaobab(baobab, hashHead):
   matchedFiles = 0
   linesTodayTotal = 0
+
+  lstree = git('ls-tree', '--name-only', '-z', '-r', hashHead)
+  trackedFiles = lstree.split('\0')
 
   for relname in trackedFiles:
     printStatus('Traversing', relname)
@@ -328,7 +327,7 @@ def populateBaobab(hashHead):
         print('No file: ' + relname)
 
   print('Filter matches {0} tracked files'.format(matchedFiles))
-  return baobab, linesTodayTotal
+  return linesTodayTotal
 
 
 ### countModifications() ###
@@ -369,7 +368,7 @@ def countModifications(baobab, hashSince, hashHead):
     if (lines.isdigit()):
       linesModifiedTotal += addToRecord(baobab, relname, int(lines))
 
-  return baobab, linesModifiedTotal
+  return linesModifiedTotal
 
 
 ### renderHtml() ###
@@ -554,8 +553,9 @@ if __name__ == '__main__':
   hashHead = git('rev-parse', 'HEAD')
   print('Commits {0}..{1}'.format(hashSince[:12], hashHead[:12]))
 
-  baobab, linesTodayTotal = populateBaobab(hashHead)
-  baobab, linesModifiedTotal = countModifications(baobab, hashSince, hashHead)
+  baobab = createRecord('.')
+  linesTodayTotal = populateBaobab(baobab, hashHead)
+  linesModifiedTotal = countModifications(baobab, hashSince, hashHead)
   baobab['name'] = absname[absname.rindex(os.sep)+1:]
 
   sumToday, sumModified = sumUp(baobab)
