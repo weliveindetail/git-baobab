@@ -105,14 +105,14 @@ const partition = hierarchy => {
   return d3.partition().size([2 * Math.PI, hierarchy.height])(hierarchy);
 };
 
-const root = partition(hierarchy(baobab_data));
-root.each(d => d.view = makeViewCoords(d.x0, d.x1, d.depth));
+baobab.root = partition(hierarchy(baobab_data));
+baobab.root.each(d => d.view = makeViewCoords(d.x0, d.x1, d.depth));
 
 function makeScaleY(viewRoot) {
   return d3.scaleLog().domain([1, viewRoot.height + 1]).range([15, viewBox.radius]);
 }
 
-var scale_y = makeScaleY(root);
+var scale_y = makeScaleY(baobab.root);
 
 function rad2deg(rad) {
   return rad * 90 / Math.PI;
@@ -146,7 +146,7 @@ baobab.canvas = svg.append("g");
 
 baobab.arcShapes = baobab.canvas.append("g")
   .selectAll("path")
-  .data(root.descendants().slice(1))
+  .data(baobab.root.descendants().slice(1))
   .join("path")
   .attr("d", d => arc(d))
   .style("stroke-width", baobab.strokeWidth);
@@ -283,7 +283,7 @@ baobab.arcLabels = baobab.canvas.append("g")
   .attr("pointer-events", "none")
   .style("fill", "#333")
   .selectAll("text")
-  .data(root.descendants().slice(1))
+  .data(baobab.root.descendants().slice(1))
   .join("text")
   .attr("text-anchor", "middle")
   .attr("dominant-baseline", "central")
@@ -308,7 +308,7 @@ baobab.arcLabels
   .attr("fill-opacity", 0);
 
 baobab.rootShape = baobab.canvas.append("circle")
-  .datum(root)
+  .datum(baobab.root)
   .attr("r", scale_y(1))
   .attr("fill", "#eee")
   .attr("fill-opacity", 0.6)
@@ -319,7 +319,7 @@ baobab.rootToolTip = baobab.rootShape.append("title")
   .text(d => tooltipFormat(d));
 
 baobab.rootLabel = baobab.canvas.append("text")
-  .datum(root)
+  .datum(baobab.root)
   .text(d => concatPath(d))
   .attr("fill", "#333")
   .attr("text-anchor", "middle")
@@ -330,7 +330,7 @@ baobab.rootLabel = baobab.canvas.append("text")
   });
 
 function clicked(item) {
-  const r = item || root;
+  const r = item || baobab.root;
   scale_y = makeScaleY(r);
 
   baobab.rootShape
@@ -377,7 +377,7 @@ function clicked(item) {
     return { x0: 0, x1: 0, y0: 0, y1: 0 };
   };
 
-  root.each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth));
+  baobab.root.each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth));
 
   baobab.arcShapes
     .attr("d", d => arc(d))

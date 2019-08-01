@@ -447,7 +447,7 @@ showOnGithubHtml = """
 
 rootInfoLabelJs = """
   baobab.${name} = baobab.canvas.append("text")
-    .datum(root)
+    .datum(baobab.root)
     .attr("pointer-events", "${pointer_events}")
     .attr("dy", "${dy}")
     .attr("fill", "${fill}")
@@ -470,7 +470,7 @@ navigateOnLoadHtml = """
 
   if (params["path"]) {
     var path = params["path"].split("/");
-    var select = root;
+    var select = baobab.root;
     for (var i = 1; i < path.length; i++) {
       const child = select.children.find(node => node.data["n"] == path[i]);
       if (child && child["children"])
