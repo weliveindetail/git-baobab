@@ -66,7 +66,8 @@ function colorHotCold(d) {
   return "#{0}88{1}".format(toHex(hot), toHex(cold));
 }
 
-function makeViewCoords(dx0, dx1, dd) {
+// Simplified version of makeSubviewCoords()
+function makeInitialViewCoords(dx0, dx1, dd) {
   const twoPi = 2 * Math.PI;
   const x0inbounds = 0 < dx0 && dx0 < twoPi;
   const x1inbounds = 0 < dx1 && dx1 < twoPi;
@@ -106,7 +107,7 @@ const partition = hierarchy => {
 };
 
 baobab.root = partition(hierarchy(baobab_data));
-baobab.root.each(d => d.view = makeViewCoords(d.x0, d.x1, d.depth));
+baobab.root.each(d => d.view = makeInitialViewCoords(d.x0, d.x1, d.depth));
 
 function makeScaleY(viewRoot) {
   return d3.scaleLog().domain([1, viewRoot.height + 1]).range([15, viewBox.radius]);
