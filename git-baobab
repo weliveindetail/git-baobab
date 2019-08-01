@@ -478,7 +478,7 @@ navigateOnLoadHtml = """
       else
         break;
     }
-    clicked(select);
+    selectAsNewRoot(select);
   }
 })();
 </script>

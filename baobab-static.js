@@ -154,7 +154,7 @@ baobab.arcShapes
 baobab.arcShapes
   .filter(d => d.children)
   .style("cursor", "pointer")
-  .on("click", clicked);
+  .on("click", selectAsNewRoot);
 
 baobab.arcToolTips = baobab.arcShapes.append("title")
   .text(d => tooltipFormat(d));
@@ -287,14 +287,14 @@ baobab.arcLabels
   .style("font-size", d => labelFontSizeArc(d))
   .attr("transform", d => labelTransform(d))
   .style("fill-opacity", 1)
-  .on("click", clicked);
+  .on("click", selectAsNewRoot);
 
 baobab.rootShape = baobab.canvas.append("circle")
   .datum(baobab.root)
   .attr("r", scale_y(1))
   .style("fill", "#f8f8f8")
   .attr("pointer-events", "all")
-  .on("click", p => clicked(p.parent));
+  .on("click", p => selectAsNewRoot(p.parent));
 
 baobab.rootToolTip = baobab.rootShape.append("title")
   .text(d => tooltipFormat(d));
@@ -309,7 +309,7 @@ baobab.rootLabel = baobab.canvas.append("text")
     return labelFontSizeRoot(this, d);
   });
 
-function clicked(item) {
+function selectAsNewRoot(item) {
   const r = item || baobab.root;
   scale_y = makeScaleY(r);
 
