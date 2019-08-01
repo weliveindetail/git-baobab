@@ -37,22 +37,24 @@ function concatPath(d) {
 
 function tooltipFormat(d) {
   return "{0}\n{1} lines modified\n{2} lines today".format(
-    concatPath(d), humanReadable(d.data.m), humanReadable(d.data.t));
+    concatPath(d), kiloMega(d.data.m), kiloMega(d.data.t));
 }
 
-function humanReadable(val) {
+const rad2deg = rad => rad * 90 / Math.PI;
+
+const dec2hex = n => {
+  const s = Math.round(n).toString(16);
+  return s.length == 1 ? "0" + s : s;
+};
+
+const kiloMega = val => {
   if (val > 1000000)
     return Math.round(val / 100000) / 10 + 'M';
   else if (val > 1000)
     return Math.round(val / 100) / 10 + 'K';
   else
-    return val;
+    return val + '';
 }
-
-function toHex(n) {
-  const s = Math.round(n).toString(16);
-  return s.length == 1 ? "0" + s : s;
-};
 
 function colorRatioSquareScale(d) {
   return (d.data.t == 0) ? 1 : Math.sqrt(d.data.m) / Math.sqrt(d.data.t);
@@ -63,7 +65,7 @@ function colorHotCold(d) {
   const base = 16 * 3 + 3;
   const hot = base + (255 - base) * ratio;
   const cold = base + (255 - base) * (1 - ratio);
-  return "#{0}88{1}".format(toHex(hot), toHex(cold));
+  return "#{0}88{1}".format(dec2hex(hot), dec2hex(cold));
 }
 
 // Simplified version of makeSubviewCoords()
@@ -114,10 +116,6 @@ function makeScaleY(viewRoot) {
 }
 
 var scale_y = makeScaleY(baobab.root);
-
-function rad2deg(rad) {
-  return rad * 90 / Math.PI;
-}
 
 function labelTransform(d) {
   // Not sure where this edge case comes from,
