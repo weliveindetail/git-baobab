@@ -445,18 +445,6 @@ showOnGithubHtml = """
 </script>
 """
 
-rootInfoLabelJs = """
-  baobab.${name} = baobab.canvas.append("text")
-    .datum(baobab.root)
-    .attr("pointer-events", "${pointer_events}")
-    .attr("dy", "${dy}")
-    .attr("font-size", "1.6px")
-    .style("font-family", "sans-serif")
-    .style("fill-opacity", 1)
-    .style("fill", "${fill}")
-    .text("${text}");
-""";
-
 navigateOnLoadHtml = """
 <script>
 (function() {
@@ -507,24 +495,13 @@ def renderHtml(baobab, hashSince, hashHead):
 
   outs.write('<script src="{0}"></script>\n'.format(args.d3js))
   outs.write('<script>\n')
+  outs.write('const baobab_hash_since = "{0}";\n'.format(hashSince));
+  outs.write('const baobab_hash_head = "{0}";\n'.format(hashHead));
   outs.write('const baobab_data = ');
   writeNodeData(baobab, outs)
   outs.write(';\n')
   outs.write('</script>\n')
   outs.write('<script src="{0}"></script>\n'.format(args.baobabjs))
-
-  infoLabel = jspp(rootInfoLabelJs)
-  outs.write('<script>')
-  outs.write(infoLabel.format(
-    name='rootLabelCommitRange', fill='#333', dy='1.6px', pointer_events='all',
-    text='{0}..{1}'.format(hashSince[:12], hashHead[:12])))
-  outs.write(infoLabel.format(
-    name='rootLabelLinesModified', fill='#aaa', dy='6.1px', pointer_events='none',
-    text='{0} lines inserted / deleted'.format(baobab['modified'])))
-  outs.write(infoLabel.format(
-    name='rootLabelLinesToday', fill='#aaa', dy='8.6px', pointer_events='none',
-    text='{0} lines today'.format(baobab['today'])))
-  outs.write('</script>\n')
 
   githubUrl = parseRemoteGithub()
   if githubUrl:

@@ -309,6 +309,35 @@ baobab.rootLabel = baobab.canvas.append("text")
     return labelFontSizeRoot(this, d);
   });
 
+baobab.rootLabelCommitRange = baobab.canvas.append("text")
+  .datum(baobab.root)
+  .attr("dy", "1.6px")
+  .style("font-size", "1.6px")
+  .style("font-family", "sans-serif")
+  .style("fill-opacity", 1)
+  .text("{0}..{1}".format(baobab_hash_since.substr(0, 12),
+                          baobab_hash_head.substr(0, 12)));
+
+baobab.rootLabelLinesModified = baobab.canvas.append("text")
+  .datum(baobab.root)
+  .attr("pointer-events", "none")
+  .attr("dy", "6.1px")
+  .style("font-size", "1.6px")
+  .style("font-family", "sans-serif")
+  .style("fill-opacity", 1)
+  .style("fill", "#aaa")
+  .text(d => "{0} insertions / deletions".format(kiloMega(d.data.m)));
+
+baobab.rootLabelLinesToday = baobab.canvas.append("text")
+  .datum(baobab.root)
+  .attr("pointer-events", "none")
+  .attr("dy", "8.6px")
+  .style("font-size", "1.6px")
+  .style("font-family", "sans-serif")
+  .style("fill-opacity", 1)
+  .style("fill", "#aaa")
+  .text(d => "{0} lines today".format(kiloMega(d.data.t)));
+
 function selectAsNewRoot(item) {
   const r = item || baobab.root;
   scale_y = makeScaleY(r);
@@ -328,11 +357,11 @@ function selectAsNewRoot(item) {
 
   baobab.rootLabelLinesToday
     .datum(r)
-    .text(d => d.data.t + " lines today");
+    .text(d => "{0} lines today".format(kiloMega(d.data.t)));
 
   baobab.rootLabelLinesModified
     .datum(r)
-    .text(d => d.data.m + " lines inserted / deleted");
+    .text(d => "{0} insertions / deletions".format(kiloMega(d.data.m)));
 
   const reciprocalDiffRootX = 1 / (r.x1 - r.x0);
   const makeSubviewCoords = (dx0, dx1, dd) => {
