@@ -232,9 +232,9 @@ function fitTextToArc(arcSpec, textRatio) {
 
 function makeArcSpec(view) {
   const spec = {};
-  //console.assert(view.y0 == view.y1 - 1, "Integral Y-scale increments");
-  //console.assert(0 <= view.x0 && view.x0 <= view.x1 && view.x1 <= 2 * Math.PI,
-  //               "X-scale in radians");
+  console.assert(view.y0 == view.y1 - 1, "Integral Y-scale increments");
+  console.assert(0 <= view.x0 && view.x0 <= view.x1 && view.x1 <= 2 * Math.PI,
+                 "X-scale in radians");
 
   spec.innerRadius = scale_y(view.y0);
   spec.outerRadius = scale_y(view.y1);
@@ -242,9 +242,9 @@ function makeArcSpec(view) {
   spec.innerLength = spec.centralAngle * spec.innerRadius;
   spec.height = spec.outerRadius - spec.innerRadius;
 
-  //console.assert(spec.outerRadius <= viewBox.radius, "Radius exceeding bounds");
-  //console.assert(spec.innerLength < 2 * Math.PI * viewBox.radius &&
-  //               spec.innerLength >= 0, "Invalid inner arc length");
+  console.assert(spec.outerRadius <= viewBox.radius, "Radius exceeding bounds");
+  console.assert(spec.innerLength < 2 * Math.PI * viewBox.radius &&
+                 spec.innerLength >= 0, "Invalid inner arc length");
   return spec;
 }
 
