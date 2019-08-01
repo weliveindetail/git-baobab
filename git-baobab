@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import io
 import os
 import os.path
 import re
@@ -169,6 +170,8 @@ parser.add_argument('-filter', metavar='.*', type=str,
   help='Add the given regex to the file filter')
 parser.add_argument('-exclude', metavar='^$', type=str,
   help='Exclude matching files from the file filter')
+parser.add_argument('-o', metavar='<random temporary>', type=str,
+  help='Set specific path for HTML output file')
 parser.add_argument('-v', action='store_true',
   help='Dump invoked git commands')
 parser.add_argument('-vv', action='store_true',
@@ -482,8 +485,15 @@ def parseRemoteGithub():
       return res.group(1)
   return ''
 
+def createOutputFile():
+  if args.o:
+    return io.open(args.o, 'w', encoding='utf8')
+  else:
+    return tempfile.NamedTemporaryFile(mode='w', encoding='utf8',
+                                       suffix='.html', delete=False)
+
 def renderHtml(baobab, hashSince, hashHead):
-  outs = tempfile.NamedTemporaryFile(mode='w', encoding='utf8', suffix='.html', delete=False)
+  outs = createOutputFile()
   print('Export chart to {0}'.format(outs.name))
 
   jspp = jsPreprocessor()
