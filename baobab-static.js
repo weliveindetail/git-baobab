@@ -80,42 +80,33 @@ function makeViewCoords(dx0, dx1, dd) {
   return { x0: 0, x1: 0, y0: 0, y1: 0 };
 }
 
-function makeTree(json_data) {
-  return d3.hierarchy(json_data)
-    .sum(d => {
-      if (d.children) {
-        // Only leafs (files) have a size, but as zeros are filtered out,
-        // their sizes in the invisible category would be missed.
-        d.todayInvisible = d.t - d.children.reduce(
-          (sum, child) => sum + child.t, 0
-        );
-        d.modifiedInvisible = d.m - d.children.reduce(
-          (sum, child) => sum + child.m, 0
-        );
+const hierarchy = data => d3.hierarchy(data)
+  .sum(d => {
+    if (d.children) {
+      // Only leafs (files) have a size, but as zeros are filtered out,
+      // their sizes in the invisible category would be missed.
+      d.todayInvisible = d.t - d.children.reduce(
+        (sum, child) => sum + child.t, 0
+      );
+      d.modifiedInvisible = d.m - d.children.reduce(
+        (sum, child) => sum + child.m, 0
+      );
 
-        console.assert(d.modifiedInvisible == 0, "Other categories not implemented yet");
-        return d.modifiedInvisible;
-      }
-      return d.children ? d.modifiedInvisible : d.m;
-    })
-    .sort((a, b) => {
-      return b.data.m - a.data.m;
-    });
-}
+      console.assert(d.modifiedInvisible == 0, "Other categories not implemented yet");
+      return d.modifiedInvisible;
+    }
+    return d.children ? d.modifiedInvisible : d.m;
+  })
+  .sort((a, b) => {
+    return b.data.m - a.data.m;
+  });
 
-function partition(tree) {
-  const fn = d3.partition().size([2 * Math.PI, tree.height]);
-  return fn(tree);
-}
+const partition = hierarchy => {
+  return d3.partition().size([2 * Math.PI, hierarchy.height])(hierarchy);
+};
 
-function makeGlobalRoot(jsonData) {
-  const rawDataTree = makeTree(jsonData);
-  const sunburstDataTree = partition(rawDataTree);
-  sunburstDataTree.each(d => d.view = makeViewCoords(d.x0, d.x1, d.depth));
-  return sunburstDataTree;
-}
-
-const root = makeGlobalRoot(baobab_data);
+const root = partition(hierarchy(baobab_data));
+root.each(d => d.view = makeViewCoords(d.x0, d.x1, d.depth));
 
 function makeScaleY(viewRoot) {
   return d3.scaleLog().domain([1, viewRoot.height + 1]).range([15, viewBox.radius]);
