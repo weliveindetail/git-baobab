@@ -451,6 +451,7 @@ rootInfoLabelJs = """
     .attr("pointer-events", "${pointer_events}")
     .attr("dy", "${dy}")
     .attr("font-size", "1.6px")
+    .style("font-family", "sans-serif")
     .style("fill-opacity", 1)
     .style("fill", "${fill}")
     .text("${text}");

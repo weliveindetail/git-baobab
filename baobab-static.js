@@ -304,6 +304,7 @@ baobab.rootLabel = baobab.canvas.append("text")
   .text(d => concatPath(d))
   .attr("dy", "-1.8px")
   .style("fill-opacity", 1)
+  .style("font-family", "sans-serif")
   .style("font-size", function(d) {
     return labelFontSizeRoot(this, d);
   });
