@@ -1,5 +1,7 @@
 body {
   background: #fff;
+  color: #333;
+  font-family: sans-serif;
   font-size: 14px;
   margin: 0px;
 }
@@ -12,7 +14,12 @@ svg {
 }
 path {
   stroke: #eee;
-  stroke-width: 0.3;
+}
+text {
+  fill: #333;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill-opacity: 0;
 }
 p {
   position: absolute;

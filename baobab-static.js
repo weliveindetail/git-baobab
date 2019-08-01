@@ -3,7 +3,7 @@ if (!String.prototype.format) {
     var args = Array.prototype.slice.call(arguments);
     return this.replace(/{(\d+)}/g, function(match, number) {
       return typeof args[number] != 'undefined'
-        ? args[number] 
+        ? args[number]
         : match
       ;
     });
@@ -138,28 +138,18 @@ const arc = d3.arc()
   .innerRadius(d => scale_y(d.view.y0))
   .outerRadius(d => scale_y(d.view.y1));
 
-const svg = d3.select('#baobab')
-  .style("font", "sans-serif");
-
-baobab.canvas = svg.append("g");
+baobab.canvas = d3.select('#baobab')
+  .style("stroke-width", baobab.strokeWidth);
 
 baobab.arcShapes = baobab.canvas.append("g")
   .selectAll("path")
   .data(baobab.root.descendants().slice(1))
   .join("path")
-  .attr("d", d => arc(d))
-  .style("stroke-width", baobab.strokeWidth);
+  .attr("d", d => arc(d));
 
 baobab.arcShapes
   .filter(d => d.view.y1 > 0)
-  .attr("stroke-opacity", 1)
-  .attr("fill-opacity", 1)
   .attr("fill", d => colorHotCold(d));
-
-baobab.arcShapes
-  .filter(d => d.view.y1 == 0)
-  .attr("stroke-opacity", 0)
-  .attr("fill-opacity", 0);
 
 baobab.arcShapes
   .filter(d => d.children)
@@ -280,37 +270,29 @@ function labelFontSizeRoot(element, d) {
 
 baobab.arcLabels = baobab.canvas.append("g")
   .attr("pointer-events", "none")
-  .style("fill", "#333")
   .selectAll("text")
   .data(baobab.root.descendants().slice(1))
   .join("text")
-  .attr("text-anchor", "middle")
-  .attr("dominant-baseline", "central")
-  .attr("font-family", "sans-serif")
   .text(d => d.data.n);
 
 // Calculate ratio of text-width to font-size once, based on initial 14px
 // font-size. Ratio is constant because arc label content is fixed.
 baobab.arcLabels.each(function(d) {
   d.textRatio = this.getComputedTextLength() / 14;
+  d.visible = labelVisible(d)
 });
 
 baobab.arcLabels
-  .filter(d => labelVisible(d))
-  .attr("fill-opacity", 1)
-  .attr("font-size", d => labelFontSizeArc(d))
+  .filter(d => d.visible)
+  .style("font-size", d => labelFontSizeArc(d))
   .attr("transform", d => labelTransform(d))
+  .style("fill-opacity", 1)
   .on("click", clicked);
-
-baobab.arcLabels
-  .filter(d => !labelVisible(d))
-  .attr("fill-opacity", 0);
 
 baobab.rootShape = baobab.canvas.append("circle")
   .datum(baobab.root)
   .attr("r", scale_y(1))
-  .attr("fill", "#eee")
-  .attr("fill-opacity", 0.6)
+  .style("fill", "#f8f8f8")
   .attr("pointer-events", "all")
   .on("click", p => clicked(p.parent));
 
@@ -320,10 +302,8 @@ baobab.rootToolTip = baobab.rootShape.append("title")
 baobab.rootLabel = baobab.canvas.append("text")
   .datum(baobab.root)
   .text(d => concatPath(d))
-  .attr("fill", "#333")
-  .attr("text-anchor", "middle")
-  .attr("dy", "-1.2px")
-  .attr("font-family", "sans-serif")
+  .attr("dy", "-1.8px")
+  .style("fill-opacity", 1)
   .style("font-size", function(d) {
     return labelFontSizeRoot(this, d);
   });
@@ -353,7 +333,6 @@ function clicked(item) {
     .datum(r)
     .text(d => d.data.m + " lines inserted / deleted");
 
-  const twoPi = 2 * Math.PI;
   const reciprocalDiffRootX = 1 / (r.x1 - r.x0);
   const makeSubviewCoords = (dx0, dx1, dd) => {
     const nd = dd - r.depth;
@@ -365,8 +344,8 @@ function clicked(item) {
       const fullCircle = nx0 <= 0 && 1 <= nx1;
       if (x0inbounds || x1inbounds || fullCircle)
         return {
-          x0: Math.max(0, nx0) * twoPi,
-          x1: Math.min(1, nx1) * twoPi,
+          x0: Math.max(0, nx0) * 2 * Math.PI,
+          x1: Math.min(1, nx1) * 2 * Math.PI,
           y0: nd,
           y1: nd + 1
         };
@@ -376,20 +355,17 @@ function clicked(item) {
     return { x0: 0, x1: 0, y0: 0, y1: 0 };
   };
 
-  baobab.root.each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth));
-
+  // Operations on each single arc. These are expensive.
   baobab.arcShapes
-    .attr("d", d => arc(d))
-    .attr("fill-opacity", d => (d.view.y1 > 0) ? 1 : 0)
-    .attr("stroke-opacity", d => (d.view.y1 > 0) ? 1 : 0);
+    .each(d => d.view = makeSubviewCoords(d.x0, d.x1, d.depth))
+    .attr("d", d => arc(d));
 
   baobab.arcLabels
-    .filter(d => labelVisible(d))
-    .attr("fill-opacity", 1)
-    .attr("font-size", d => labelFontSizeArc(d))
+    .each(d => d.visible = labelVisible(d))
+    .style("fill-opacity", d => +d.visible);
+
+  baobab.arcLabels
+    .filter(d => d.visible)
+    .style("font-size", d => labelFontSizeArc(d))
     .attr("transform", d => labelTransform(d));
-
-  baobab.arcLabels
-    .filter(d => !labelVisible(d))
-    .attr("fill-opacity", 0);
 }

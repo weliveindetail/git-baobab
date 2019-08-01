@@ -450,10 +450,9 @@ rootInfoLabelJs = """
     .datum(baobab.root)
     .attr("pointer-events", "${pointer_events}")
     .attr("dy", "${dy}")
-    .attr("fill", "${fill}")
-    .attr("text-anchor", "middle")
-    .attr("font-family", "sans-serif")
-    .style("font-size", "1.6px")
+    .attr("font-size", "1.6px")
+    .style("fill-opacity", 1)
+    .style("fill", "${fill}")
     .text("${text}");
 """;
 
