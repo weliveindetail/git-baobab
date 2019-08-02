@@ -253,20 +253,19 @@ def printStatus(banner, relname):
 
 ### git() ###
 
-dev_null = open(os.devnull, 'w')
 zeros = re.compile('\x00')
 def git(*cmd):
   if args.v or args.vv:
     print('git ' + ' '.join(list(cmd)))
   p = subprocess.Popen(['git'] + list(cmd), cwd=os.getcwd(),
-                       stdout=subprocess.PIPE, stderr=dev_null,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        stdin=subprocess.PIPE, universal_newlines=True)
   stdout, stderr = p.communicate()
   stdout = stdout.rstrip('\r\n')
   if args.vv:
     readable = zeros.sub('\n', stdout)
     print(readable)
-  return stdout
+  return stdout if p.returncode == 0 else stderr
 
 
 ### populateBaobab() ###
