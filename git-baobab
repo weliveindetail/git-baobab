@@ -551,7 +551,7 @@ if __name__ == '__main__':
   assert(sumToday == linesTodayTotal)
   assert(sumModified == linesModifiedTotal)
 
-  print('{0} lines today, {1} lines changed'.format(
+  print('{0} lines today, {1} insertions / deletions'.format(
         linesTodayTotal, linesModifiedTotal))
 
   htmlFileName = renderHtml(baobab, hashSince, hashHead)

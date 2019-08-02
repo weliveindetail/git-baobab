@@ -36,7 +36,7 @@ function concatPath(d) {
 }
 
 function tooltipFormat(d) {
-  return "{0}\n{1} lines modified\n{2} lines today".format(
+  return "{0}\n{1} insertions / deletions\n{2} lines today".format(
     concatPath(d), kiloMega(d.data.m), kiloMega(d.data.t));
 }
 
