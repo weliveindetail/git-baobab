@@ -51,6 +51,8 @@ optional arguments:
   -h                    show this help message and exit
   -filter .*            Add the given regex to the file filter
   -exclude ^$           Exclude matching files from the file filter
+  -o <random temporary>
+                        Set specific path for HTML output file
   -v                    Dump invoked git commands
   -vv                   Dump invoked git commands and output
 
@@ -198,8 +200,8 @@ customize artifacts:
   -md5js https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js
                         URL to custom script that provides a `md5()` function
                         (for GitHub integration)
-  -baobabjs https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.min.js
+  -baobabjs https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.min.js
                         URL to custom baobab-static.js
-  -baobabcss https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.css
+  -baobabcss https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.css
                         URL to custom baobab-static.css
 ```
