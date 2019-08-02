@@ -172,6 +172,8 @@ parser.add_argument('-exclude', metavar='^$', type=str,
   help='Exclude matching files from the file filter')
 parser.add_argument('-o', metavar='<random temporary>', type=str,
   help='Set specific path for HTML output file')
+parser.add_argument('-b', action='store_true',
+  help='Run in batch mode')
 parser.add_argument('-v', action='store_true',
   help='Dump invoked git commands')
 parser.add_argument('-vv', action='store_true',
@@ -540,6 +542,9 @@ def sumUp(node):
 
 
 if __name__ == '__main__':
+  if args.b:
+    print('Batch mode:\n{0}'.format(' '.join(sys.argv)))
+
   absname = git('rev-parse', '--show-toplevel')
   if absname != os.getcwd():
     die('Error: working directory is not the repository root')
@@ -564,5 +569,6 @@ if __name__ == '__main__':
         linesTodayTotal, linesModifiedTotal))
 
   htmlFileName = renderHtml(baobab, hashSince, hashHead)
-  if input('Show in browser? [Y/n] ') != 'n':
-    webbrowser.open('file://' + htmlFileName)
+  if not args.b:
+    if input('Show in browser? [Y/n] ') != 'n':
+      webbrowser.open('file://' + htmlFileName)
