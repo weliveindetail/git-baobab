@@ -1,18 +1,14 @@
 
 <!DOCTYPE html>
 <meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.css">
-<style>
-svg {
-  width: 100%;
-  height: 100%;
-}
-</style>
+<link rel="stylesheet" type="text/css" href="https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.css">
 <body>
 <svg id="baobab"></svg>
 <p>git baobab 7b5565418f4 --cmake</p>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script>
+const baobab_hash_since = "7b5565418f4d6e113ba805dad40d471d23bca6f6";
+const baobab_hash_head = "2cf681a11aea459b50d712abc7136f7129e4d57f";
 const baobab_data = {n: "llvm-project", m: 10679, t: 89061, children: [
   {n: "clang-tools-extra", m: 413, t: 4691, children: [
     {n: "CMakeLists.txt", m: 18, t: 34},
@@ -1711,38 +1707,7 @@ const baobab_data = {n: "llvm-project", m: 10679, t: 89061, children: [
   ]}
 ]};
 </script>
-<script src="https://weliveindetail.github.io/git-baobab/baobab-static.v0.2.min.js"></script>
-<script>
-  baobab.rootLabelCommitRange = baobab.canvas.append("text")
-    .datum(root)
-    .attr("pointer-events", "all")
-    .attr("dy", "1.6px")
-    .attr("fill", "#333")
-    .attr("text-anchor", "middle")
-    .attr("font-family", "sans-serif")
-    .style("font-size", "1.6px")
-    .text("7b5565418f4d..2cf681a11aea");
-
-  baobab.rootLabelLinesModified = baobab.canvas.append("text")
-    .datum(root)
-    .attr("pointer-events", "none")
-    .attr("dy", "6.1px")
-    .attr("fill", "#aaa")
-    .attr("text-anchor", "middle")
-    .attr("font-family", "sans-serif")
-    .style("font-size", "1.6px")
-    .text("10679 lines inserted / deleted");
-
-  baobab.rootLabelLinesToday = baobab.canvas.append("text")
-    .datum(root)
-    .attr("pointer-events", "none")
-    .attr("dy", "8.6px")
-    .attr("fill", "#aaa")
-    .attr("text-anchor", "middle")
-    .attr("font-family", "sans-serif")
-    .style("font-size", "1.6px")
-    .text("89061 lines today");
-</script>
+<script src="https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
 <script>
   function showOnGithub(d) {
@@ -1755,5 +1720,30 @@ const baobab_data = {n: "llvm-project", m: 10679, t: 89061, children: [
     .filter(d => !d.children)
     .style("cursor", "pointer")
     .on("click", d => showOnGithub(d));
+</script>
+
+<script>
+(function() {
+  var regex = /[?&]([^=#]+)=([^&#]*)/g,
+      url = window.location.href,
+      params = {},
+      match;
+  while(match = regex.exec(url)) {
+    params[match[1]] = match[2];
+  }
+
+  if (params["path"]) {
+    var path = params["path"].split("/");
+    var select = baobab.root;
+    for (var i = 1; i < path.length; i++) {
+      const child = select.children.find(node => node.data["n"] == path[i]);
+      if (child && child["children"])
+        select = child
+      else
+        break;
+    }
+    selectAsNewRoot(select);
+  }
+})();
 </script>
 </body>
