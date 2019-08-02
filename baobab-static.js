@@ -296,9 +296,6 @@ baobab.rootShape = baobab.canvas.append("circle")
   .attr("pointer-events", "all")
   .on("click", p => selectAsNewRoot(p.parent));
 
-baobab.rootToolTip = baobab.rootShape.append("title")
-  .text(d => tooltipFormat(d));
-
 baobab.rootLabel = baobab.canvas.append("text")
   .datum(baobab.root)
   .text(d => concatPath(d))
@@ -345,9 +342,6 @@ function selectAsNewRoot(item) {
   baobab.rootShape
     .datum(r)
     .style("cursor", r.parent ? "pointer" :  "default");
-
-  baobab.rootToolTip
-    .text(d => tooltipFormat(d));
 
   baobab.rootLabel
     .text(concatPath(r))
