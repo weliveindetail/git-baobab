@@ -14,14 +14,15 @@ $ ln -s /path/to/git-baobab/git-baobab /usr/local/bin/git-baobab
 ```
 $ git clone https://github.com/llvm/llvm-project.git
 $ cd llvm-project
-$ git rev-parse HEAD
-2cf681a11aea459b50d712abc7136f7129e4d57f
+$ git log -1 --oneline 2cf681a11aea
+2cf681a11ae Creating release_90 branch off revision 366426
+$ git checkout 2cf681a11aea
 $ git merge-base HEAD origin/release/8.x
 7b5565418f4d6e113ba805dad40d471d23bca6f6
-$ git baobab 7b5565418f4 --cpp -exclude "/(test|unittest|unittests)/"
+$ git baobab 7b5565418f4d --cpp -exclude "/(test|unittest|unittests)/"
 Commits 7b5565418f4d..2cf681a11aea
 Filter matches 11896 tracked files
-4879337 lines today, 647882 lines changed
+4879337 lines today, 647882 insertions / deletions
 Export chart to /var/folders/2k/myk8kt8d4f52dzr19331wtxr0000gn/T/tmps7oukjk2.html
 Show in browser? [Y/n] y
 ```
@@ -38,6 +39,7 @@ Reduced help page
 
 ```
 usage: git-baobab [-h] [-filter .*] [-exclude .*]
+                  [-o <random temporary>] [-b] [-v] [-vv]
                   [<file extension filters>]
                   [<artifact options>]
                   since
@@ -52,6 +54,7 @@ optional arguments:
   -filter .*            Add the given regex to the file filter
   -exclude ^$           Exclude matching files from the file filter
   -o <random temporary>
+  -b                    Run in batch mode
                         Set specific path for HTML output file
   -v                    Dump invoked git commands
   -vv                   Dump invoked git commands and output
