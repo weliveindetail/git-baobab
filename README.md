@@ -200,8 +200,8 @@ include files with extensions:
 customize artifacts:
   -d3js https://d3js.org/d3.v5.min.js
                         URL to custom d3js variant (tested with v5)
-  -md5js https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js
-                        URL to custom script that provides a `md5()` function
+  -sha256js https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js
+                        URL to custom script that provides a `sha256()` function
                         (for GitHub integration)
   -baobabjs https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.min.js
                         URL to custom baobab-static.js
