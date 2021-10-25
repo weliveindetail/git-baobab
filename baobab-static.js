@@ -56,12 +56,30 @@ const kiloMega = val => {
     return val + '';
 }
 
-function colorRatioSquareScale(d) {
-  return (d.data.t == 0) ? 1 : Math.sqrt(d.data.m) / Math.sqrt(d.data.t);
+// Initialize opposites. Non-relative bounds would be: min=0, max=100
+let globalHotColdRatioBounds = {
+  min: 100,
+  max: 0,
 }
 
-function colorHotCold(d) {
-  const ratio = Math.min(1, colorRatioSquareScale(d));
+// FIXME: This could happen at generation-time
+function updateGlobalHotColdRatioRange(ratio) {
+  globalHotColdRatioBounds.min = Math.min(globalHotColdRatioBounds.min, ratio);
+  globalHotColdRatioBounds.max = Math.max(globalHotColdRatioBounds.max, ratio);
+}
+
+function colorRatioSqrtScaleRelative(d) {
+  if (d.data.t == 0)
+    return 1;
+  const ratio = d.data.m / d.data.t;
+  const bounds = globalHotColdRatioBounds;
+  console.assert(ratio >= bounds.min, "Ratio below lower boundary");
+  console.assert(ratio <= bounds.max, "Ratio above upper boundary");
+  return Math.sqrt((ratio - bounds.min) / (bounds.max - bounds.min));
+}
+
+function colorHotColdRelative(d) {
+  const ratio = Math.min(1, colorRatioSqrtScaleRelative(d));
   const base = 16 * 3 + 3;
   const hot = base + (255 - base) * ratio;
   const cold = base + (255 - base) * (1 - ratio);
@@ -96,8 +114,11 @@ const hierarchy = data => d3.hierarchy(data)
       );
 
       console.assert(d.modifiedInvisible == 0, "Other categories not implemented yet");
-      return d.modifiedInvisible;
+
+      for (const child of d.children)
+        updateGlobalHotColdRatioRange(child.m / child.t);
     }
+    updateGlobalHotColdRatioRange(d.m / d.t);
     return d.children ? d.modifiedInvisible : d.m;
   })
   .sort((a, b) => {
@@ -149,7 +170,7 @@ baobab.arcShapes = baobab.canvas.append("g")
 
 baobab.arcShapes
   .filter(d => d.view.y1 > 0)
-  .attr("fill", d => colorHotCold(d));
+  .attr("fill", d => colorHotColdRelative(d));
 
 baobab.arcShapes
   .filter(d => d.children)
