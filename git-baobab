@@ -352,6 +352,7 @@ def parseStatLineRelname(parts):
 
 def parseStatLine(s):
   parts = s.split()
+  assert len(parts) > 1
   if parts[0].isdigit() and parts[1].isdigit():
     lines = int(parts[0]) + int(parts[1])
     relname = parseStatLineRelname(parts[2:])
@@ -375,9 +376,11 @@ def addToRecord(root, relname, lines):
 def countModifications(baobab, hashSince, hashHead):
   printStatusBanner('Fetching stats')
   stat = git('diff', '--color=never', '--numstat', '{0}..{1}'.format(hashSince, hashHead))
+  if len(stat) == 0:
+    die('Error: commit range is empty')
+
   statLines = stat.split('\n')
   linesModifiedTotal = 0
-
   for s in statLines:
     relname, lines = parseStatLine(s)
     if lines > 0:
