@@ -158,7 +158,7 @@ def die(msg):
 
 
 d3js_default = 'https://d3js.org/d3.v5.min.js'
-md5js_default = 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js'
+sha256js_default = 'https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js'
 baobabjs_default = 'https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.min.js'
 baobabcss_default = 'https://weliveindetail.github.io/git-baobab/baobab-static.v0.3.css'
 
@@ -195,8 +195,8 @@ artifacts = parser.add_argument_group('customize artifacts')
 
 artifacts.add_argument('-d3js', type=str, metavar=d3js_default, default=d3js_default,
   help='URL to custom d3js variant (tested with v5)')
-artifacts.add_argument('-md5js', type=str, metavar=md5js_default, default=md5js_default,
-  help='URL to custom script that provides a `md5()` function (for GitHub integration)')
+artifacts.add_argument('-sha256js', type=str, metavar=sha256js_default, default=sha256js_default,
+  help='URL to custom script that provides a `sha256()` function (for GitHub integration)')
 artifacts.add_argument('-baobabjs', type=str, metavar=baobabjs_default, default=baobabjs_default,
   help='URL to custom baobab-static.js')
 artifacts.add_argument('-baobabcss', type=str, metavar=baobabcss_default, default=baobabcss_default,
@@ -439,7 +439,7 @@ showOnGithubHtml = """
   function showOnGithub(d) {
     const url = "https://${github_remote}/compare/${sha_from}..${sha_to}#diff-";
     const relPath = concatPath(d).slice(${root_name_len} + 1); // account for slash
-    window.open(url + md5(relPath), '_blank');
+    window.open(url + sha256(relPath), '_blank');
   }
 
   baobab.arcShapes
@@ -516,7 +516,7 @@ def renderHtml(baobab, hashSince, hashHead):
 
   githubUrl = parseRemoteGithub()
   if githubUrl:
-    outs.write('<script src="{0}"></script>'.format(args.md5js))
+    outs.write('<script src="{0}"></script>'.format(args.sha256js))
     outs.write(jspp(showOnGithubHtml).format(
       github_remote=githubUrl, sha_from=hashSince, sha_to=hashHead,
       root_name_len=len(baobab['name'])
