@@ -455,6 +455,18 @@ showOnGithubHtml = """
 </script>
 """
 
+# FIXME: Move this into the static js file
+highlightOnHover = """
+<script>
+  function setOpacity(d, percent) {
+    d.style("fill-opacity", percent);
+  }
+  baobab.arcShapes
+    .on("mouseover", function() { setOpacity(d3.select(this), 0.75); })
+    .on("mouseout", function() { setOpacity(d3.select(this), 1); });
+</script>
+"""
+
 navigateOnLoadHtml = """
 <script>
 (function() {
@@ -504,7 +516,6 @@ def renderHtml(baobab, hashSince, hashHead):
   outs = createOutputFile()
   print('Export chart to {0}'.format(outs.name))
 
-  jspp = jsPreprocessor()
   commandLineArgs = ' '.join(sys.argv[1:])
   outs.write(headerHtml.format(css=args.baobabcss, args=commandLineArgs))
   outs.write('<body>\n')
@@ -521,6 +532,9 @@ def renderHtml(baobab, hashSince, hashHead):
   outs.write(';\n')
   outs.write('</script>\n')
   outs.write('<script src="{0}"></script>\n'.format(args.baobabjs))
+
+  jspp = jsPreprocessor()
+  outs.write(jspp(highlightOnHover))
 
   githubUrl = parseRemoteGithub()
   if githubUrl:
