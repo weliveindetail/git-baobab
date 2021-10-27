@@ -433,8 +433,11 @@ def jsPreprocessor():
 
 headerHtml = """
 <!DOCTYPE html>
-<meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="${css}">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="{css}">
+  <title>git baobab {args}</title>
+</head>
 """
 
 showOnGithubHtml = """
@@ -502,10 +505,12 @@ def renderHtml(baobab, hashSince, hashHead):
   print('Export chart to {0}'.format(outs.name))
 
   jspp = jsPreprocessor()
-  outs.write(jspp(headerHtml).format(css=args.baobabcss))
+  commandLineArgs = ' '.join(sys.argv[1:])
+  outs.write(headerHtml.format(css=args.baobabcss, args=commandLineArgs))
   outs.write('<body>\n')
   outs.write('<svg id=\"baobab\"></svg>\n')
-  outs.write('<p>git baobab {0}</p>\n'.format(' '.join(sys.argv[1:])))
+
+  outs.write('<p>git baobab {0}</p>\n'.format(commandLineArgs))
 
   outs.write('<script src="{0}"></script>\n'.format(args.d3js))
   outs.write('<script>\n')
