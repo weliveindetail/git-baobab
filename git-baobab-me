@@ -1,0 +1,603 @@
+#!/usr/bin/env python3
+
+import argparse
+import io
+import math
+import os
+import os.path
+import re
+import subprocess
+import sys
+import tempfile
+import webbrowser
+
+from datetime import datetime, timedelta
+
+all_languages = [
+  [ 'actionscript', [ 'as', 'mxml' ] ],
+  [ 'ada', [ 'ada', 'adb', 'ads' ] ],
+  [ 'asciidoc', [ 'adoc', 'ad', 'asc', 'asciidoc' ] ],
+  [ 'apl', [ 'apl' ] ],
+  [ 'asm', [ 'asm', 's' ] ],
+  [ 'asp', [ 'asp', 'asa', 'aspx', 'asax', 'ashx', 'ascx', 'asmx' ] ],
+  [ 'aspx', [ 'asp', 'asa', 'aspx', 'asax', 'ashx', 'ascx', 'asmx' ] ],
+  [ 'batch', [ 'bat', 'cmd' ] ],
+  [ 'bitbake', [ 'bb', 'bbappend', 'bbclass', 'inc' ] ],
+  [ 'bro', [ 'bro', 'bif' ] ],
+  [ 'cc', [ 'c', 'h', 'xs' ] ],
+  [ 'cfmx', [ 'cfc', 'cfm', 'cfml' ] ],
+  [ 'chpl', [ 'chpl' ] ],
+  [ 'clojure', [ 'clj', 'cljs', 'cljc', 'cljx' ] ],
+  [ 'coffee', [ 'coffee', 'cjsx' ] ],
+  [ 'config', [ 'config' ] ],
+  [ 'coq', [ 'coq', 'g', 'v' ] ],
+  [ 'cpp', [ 'cpp', 'cc', 'C', 'cxx', 'm', 'hpp', 'hh', 'h', 'H', 'hxx', 'tpp' ] ],
+  [ 'crystal', [ 'cr', 'ecr' ] ],
+  [ 'csharp', [ 'cs' ] ],
+  [ 'cshtml', [ 'cshtml' ] ],
+  [ 'css', [ 'css' ] ],
+  [ 'cython', [ 'pyx', 'pxd', 'pxi' ] ],
+  [ 'delphi', [ 'pas', 'int', 'dfm', 'nfm', 'dof', 'dpk', 'dpr', 'dproj', 'groupproj', 'bdsgroup', 'bdsproj' ] ],
+  [ 'dlang', [ 'd', 'di' ] ],
+  [ 'dot', [ 'dot', 'gv' ] ],
+  [ 'dts', [ 'dts', 'dtsi' ] ],
+  [ 'ebuild', [ 'ebuild', 'eclass' ] ],
+  [ 'elisp', [ 'el' ] ],
+  [ 'elixir', [ 'ex', 'eex', 'exs' ] ],
+  [ 'elm', [ 'elm' ] ],
+  [ 'erlang', [ 'erl', 'hrl' ] ],
+  [ 'factor', [ 'factor' ] ],
+  [ 'fortran', [ 'f', 'F', 'f77', 'f90', 'F90', 'f95', 'f03', 'for', 'ftn', 'fpp', 'FPP' ] ],
+  [ 'fsharp', [ 'fs', 'fsi', 'fsx' ] ],
+  [ 'gettext', [ 'po', 'pot', 'mo' ] ],
+  [ 'glsl', [ 'vert', 'tesc', 'tese', 'geom', 'frag', 'comp' ] ],
+  [ 'go', [ 'go' ] ],
+  [ 'groovy', [ 'groovy', 'gtmpl', 'gpp', 'grunit', 'gradle' ] ],
+  [ 'haml', [ 'haml' ] ],
+  [ 'handlebars', [ 'hbs' ] ],
+  [ 'haskell', [ 'hs', 'hsig', 'lhs' ] ],
+  [ 'haxe', [ 'hx' ] ],
+  [ 'hh', [ 'h' ] ],
+  [ 'html', [ 'htm', 'html', 'shtml', 'xhtml' ] ],
+  [ 'idris', [ 'idr', 'ipkg', 'lidr' ] ],
+  [ 'ini', [ 'ini' ] ],
+  [ 'ipython', [ 'ipynb' ] ],
+  [ 'isabelle', [ 'thy' ] ],
+  [ 'j', [ 'ijs' ] ],
+  [ 'jade', [ 'jade' ] ],
+  [ 'java', [ 'java', 'properties' ] ],
+  [ 'jinja2', [ 'j2' ] ],
+  [ 'js', [ 'es6', 'js', 'jsx', 'vue' ] ],
+  [ 'json', [ 'json' ] ],
+  [ 'jsp', [ 'jsp', 'jspx', 'jhtm', 'jhtml', 'jspf', 'tag', 'tagf' ] ],
+  [ 'julia', [ 'jl' ] ],
+  [ 'kotlin', [ 'kt' ] ],
+  [ 'less', [ 'less' ] ],
+  [ 'liquid', [ 'liquid' ] ],
+  [ 'lisp', [ 'lisp', 'lsp' ] ],
+  [ 'log', [ 'log' ] ],
+  [ 'lua', [ 'lua' ] ],
+  [ 'm4', [ 'm4' ] ],
+  [ 'make', [ 'Makefiles', 'mk', 'mak' ] ],
+  [ 'mako', [ 'mako' ] ],
+  [ 'markdown', [ 'markdown', 'mdown', 'mdwn', 'mkdn', 'mkd', 'md' ] ],
+  [ 'mason', [ 'mas', 'mhtml', 'mpl', 'mtxt' ] ],
+  [ 'matlab', [ 'm' ] ],
+  [ 'mathematica', [ 'm', 'wl' ] ],
+  [ 'md', [ 'markdown', 'mdown', 'mdwn', 'mkdn', 'mkd', 'md' ] ],
+  [ 'mercury', [ 'm', 'moo' ] ],
+  [ 'naccess', [ 'asa', 'rsa' ] ],
+  [ 'nim', [ 'nim' ] ],
+  [ 'nix', [ 'nix' ] ],
+  [ 'objc', [ 'm', 'h' ] ],
+  [ 'objcpp', [ 'mm', 'h' ] ],
+  [ 'ocaml', [ 'ml', 'mli', 'mll', 'mly' ] ],
+  [ 'octave', [ 'm' ] ],
+  [ 'org', [ 'org' ] ],
+  [ 'parrot', [ 'pir', 'pasm', 'pmc', 'ops', 'pod', 'pg', 'tg' ] ],
+  [ 'pdb', [ 'pdb' ] ],
+  [ 'perl', [ 'pl', 'pm', 'pm6', 'pod', 't' ] ],
+  [ 'php', [ 'php', 'phpt', 'php3', 'php4', 'php5', 'phtml' ] ],
+  [ 'pike', [ 'pike', 'pmod' ] ],
+  [ 'plist', [ 'plist' ] ],
+  [ 'plone', [ 'pt', 'cpt', 'metadata', 'cpy', 'py', 'xml', 'zcml' ] ],
+  [ 'powershell', [ 'ps1' ] ],
+  [ 'proto', [ 'proto' ] ],
+  [ 'ps1', [ 'ps1' ] ],
+  [ 'pug', [ 'pug' ] ],
+  [ 'puppet', [ 'pp' ] ],
+  [ 'python', [ 'py' ] ],
+  [ 'qml', [ 'qml' ] ],
+  [ 'racket', [ 'rkt', 'ss', 'scm' ] ],
+  [ 'rake', [ 'Rakefile' ] ],
+  [ 'razor', [ 'cshtml' ] ],
+  [ 'restructuredtext', [ 'rst' ] ],
+  [ 'rs', [ 'rs' ] ],
+  [ 'r', [ 'r', 'R', 'Rmd', 'Rnw', 'Rtex', 'Rrst' ] ],
+  [ 'rdoc', [ 'rdoc' ] ],
+  [ 'ruby', [ 'rb', 'rhtml', 'rjs', 'rxml', 'erb', 'rake', 'spec' ] ],
+  [ 'rust', [ 'rs' ] ],
+  [ 'salt', [ 'sls' ] ],
+  [ 'sass', [ 'sass', 'scss' ] ],
+  [ 'scala', [ 'scala' ] ],
+  [ 'scheme', [ 'scm', 'ss' ] ],
+  [ 'shell', [ 'sh', 'bash', 'csh', 'tcsh', 'ksh', 'zsh', 'fish' ] ],
+  [ 'smalltalk', [ 'st' ] ],
+  [ 'sml', [ 'sml', 'fun', 'mlb', 'sig' ] ],
+  [ 'sql', [ 'sql', 'ctl' ] ],
+  [ 'stata', [ 'do', 'ado' ] ],
+  [ 'stylus', [ 'styl' ] ],
+  [ 'swift', [ 'swift' ] ],
+  [ 'tcl', [ 'tcl', 'itcl', 'itk' ] ],
+  [ 'terraform', [ 'tf', 'tfvars' ] ],
+  [ 'tex', [ 'tex', 'cls', 'sty' ] ],
+  [ 'thrift', [ 'thrift' ] ],
+  [ 'tla', [ 'tla' ] ],
+  [ 'tt', [ 'tt', 'tt2', 'ttml' ] ],
+  [ 'toml', [ 'toml' ] ],
+  [ 'ts', [ 'ts', 'tsx' ] ],
+  [ 'twig', [ 'twig' ] ],
+  [ 'vala', [ 'vala', 'vapi' ] ],
+  [ 'vb', [ 'bas', 'cls', 'frm', 'ctl', 'vb', 'resx' ] ],
+  [ 'velocity', [ 'vm', 'vtl', 'vsl' ] ],
+  [ 'verilog', [ 'v', 'vh', 'sv', 'svh' ] ],
+  [ 'vhdl', [ 'vhd', 'vhdl' ] ],
+  [ 'vim', [ 'vim' ] ],
+  [ 'wix', [ 'wxi', 'wxs' ] ],
+  [ 'wsdl', [ 'wsdl' ] ],
+  [ 'wadl', [ 'wadl' ] ],
+  [ 'xml', [ 'xml', 'dtd', 'xsl', 'xslt', 'xsd', 'ent', 'tld', 'plist', 'wsdl' ] ],
+  [ 'yaml', [ 'yaml', 'yml' ] ]
+]
+
+
+def eprint(*args, **kwargs):
+  print(*args, file=sys.stderr, **kwargs)
+
+def die(msg):
+  eprint(msg)
+  sys.exit(1)
+
+
+d3js_default = 'https://d3js.org/d3.v5.min.js'
+baobabjs_default = 'https://weliveindetail.github.io/git-baobab/baobab-me-static.v0.5.min.js'
+baobabcss_default = 'https://weliveindetail.github.io/git-baobab/baobab-me-static.v0.5.css'
+
+parser = argparse.ArgumentParser(
+  description='git baobab-me: explore changes in a sunburst chart')
+parser.add_argument('author', metavar='author', type=str,
+  help='The author\'s e-mail address')
+parser.add_argument('-since', type=str,
+  help='The git commit to start the analysis from')
+parser.add_argument('-filter', metavar='.*', type=str,
+  help='Add the given regex to the file filter')
+parser.add_argument('-exclude', metavar='^$', type=str,
+  help='Exclude matching files from the file filter')
+parser.add_argument('-o', metavar='<random temporary>', type=str,
+  help='Set specific path for HTML output file')
+parser.add_argument('-b', action='store_true',
+  help='Run in batch mode')
+parser.add_argument('-v', action='store_true',
+  help='Dump invoked git commands')
+parser.add_argument('-vv', action='store_true',
+  help='Dump invoked git commands and output')
+
+langs = parser.add_argument_group('include files with extensions')
+
+for lang in all_languages:
+  langs.add_argument('--' + lang[0],
+    dest='requested_language_ids', action='append_const', const=lang[0],
+    help=', '.join(lang[1]))
+
+# CMake is more complicated
+langs.add_argument('--cmake',
+  dest='requested_language_cmake', action='store_const', const=True,
+  help='cmake, in (and CMakeLists.txt files)')
+
+artifacts = parser.add_argument_group('customize artifacts')
+
+artifacts.add_argument('-d3js', type=str, metavar=d3js_default, default=d3js_default,
+  help='URL to custom d3js variant (tested with v5)')
+artifacts.add_argument('-baobabjs', type=str, metavar=baobabjs_default, default=baobabjs_default,
+  help='URL to custom baobab-static.js')
+artifacts.add_argument('-baobabcss', type=str, metavar=baobabcss_default, default=baobabcss_default,
+  help='URL to custom baobab-static.css')
+
+args = parser.parse_args()
+
+if (args.filter):
+  # Use custom regex and potential lang extensions
+  if (args.requested_language_cmake):
+    file_search_regex = '({0})(.*CMakeLists.txt|.*\.(cmake|in))$'.format(args.filter)
+  else:
+    file_search_regex = '({0})'.format(args.filter)
+else:
+  # Use potential lang extensions or match all
+  if (args.requested_language_cmake):
+    file_search_regex = '(CMakeLists.txt$)|(.*\.(cmake|in)$)'
+  else:
+    file_search_regex = ''
+
+# Append regex's for requested languages
+if args.requested_language_ids:
+  for lang in args.requested_language_ids:
+    suffixes = next((x[1] for x in all_languages if x[0] == lang), None)
+    if (suffixes):
+      file_search_regex += '.*\.(' + '|'.join(suffixes) + ')$'
+    else:
+      die('Error: undefined language specifier "' + lang +
+          '" should have been caught in ArgumentParser.')
+
+if args.exclude:
+  file_exclude_regex = args.exclude
+else:
+  file_exclude_regex = '^$' # never matches
+
+baobabIncludePattern = re.compile(file_search_regex, re.IGNORECASE)
+baobabExcludePattern = re.compile(file_exclude_regex, re.IGNORECASE)
+baobabFileSizeCap = 1024 * 1024 * 8 # MB
+
+### printStatus() ###
+
+printStatusLastBanner = ''
+def printStatusBanner(banner):
+  global printStatusLastBanner
+  if banner != printStatusLastBanner:
+    printStatusLastBanner = banner
+    print('\033[K' + banner, end='\r', flush=True)
+
+printStatusLastPos = -2
+def printStatus(banner, relname):
+  global printStatusLastPos
+  pos = relname.find(os.sep)
+  if pos != printStatusLastPos:
+    printStatusLastPos = pos
+    subdir = relname[:pos] if pos >= 0 else '.'
+    print('\033[K' + banner + ': ' + subdir, end='\r', flush=True)
+
+
+### git() ###
+
+zeros = re.compile('\x00')
+def git(*cmd):
+  if args.v or args.vv:
+    print('git ' + ' '.join(list(cmd)))
+  p = subprocess.Popen(['git'] + list(cmd), cwd=os.getcwd(),
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       stdin=subprocess.PIPE, universal_newlines=True)
+  stdout, stderr = p.communicate()
+  stdout = stdout.rstrip('\r\n')
+  if args.vv:
+    readable = zeros.sub('\n', stdout)
+    print(readable)
+  return stdout if p.returncode == 0 else stderr
+
+### countModifications() ###
+
+def createRecord(n):
+  return {
+    'name': n,      # basename of file or folder
+    'total': 0,     # line changes total in period of interest
+    'modified': 0,  # line changes under filter in period of interest
+    'commits': [],  # list of commits under filter (can have duplicates)
+    'weight': 0.0,  # relative size of record in diagram
+    'age': 10000,   # years since least recent commit
+    'children': {}  # subentries (files and folders)
+  }
+
+def enterSubRecord(record, child):
+  if child not in record['children']:
+    relname = record['name'] + os.sep + child
+    record['children'][child] = createRecord(relname)
+  return record['children'][child]
+
+def findRecord(root, relname):
+  record = root
+  for part in relname.split(os.sep):
+    record = enterSubRecord(record, part)
+  return record
+
+# FIXME: That's not 100%, but good enough for now
+def parseStatLineRelname(parts):
+  if '=>' in parts:
+    arrow = parts.index('=>')
+    old = ' '.join(parts[0:arrow])
+    new = ' '.join(parts[arrow + 1:])
+    if '{' in old:
+      # Partial rename: path/to/{old-dir, =>, new-dir}/fi le.ext
+      return old[:old.index('{')] + new.replace('}', '')
+    else:
+      # Full rename: old/path/to/fi le.ext, =>, new/path/to/file.ext
+      return new
+  # No rename: path/to/fi le.ext
+  return ' '.join(parts)
+
+def parseStatLine(s):
+  parts = s.split()
+  assert len(parts) > 1
+  if parts[0].isdigit() and parts[1].isdigit():
+    insertions = int(parts[0])
+    deletions = int(parts[1])
+    relname = parseStatLineRelname(parts[2:])
+    return relname, insertions + deletions #if deletions == 0 else math.log2(deletions)
+  else:
+    # Ignore binary files
+    assert parts[0] == '-' and parts[1] == '-'
+    return '', 0
+
+def baobabInclude(relname):
+  if (relname):
+    if baobabIncludePattern.search(relname):
+      if not baobabExcludePattern.search(relname):
+        return True
+  return False
+
+def populateBaobab(baobab, hashSince, hashHead):
+  stat = git('diff', '--color=never', '--numstat', '{0}..{1}'.format(hashSince, hashHead))
+  if len(stat) == 0:
+    die('Error: commit range is empty')
+
+  statLines = stat.split('\n')
+  printStatusBanner('Processing {0} stat lines'.format(len(statLines)))
+  for s in statLines:
+    relname, lines = parseStatLine(s)
+    if lines > 0 and baobabInclude(relname):
+      record = findRecord(baobab, relname)
+      if record['total'] != 0:
+        print("Warning: duplicate stat line for", record['name'])
+        assert record['total'] == lines
+      record['total'] = lines
+
+def ageInYears(commitDateStr):
+  assert commitDateStr.count('-') == 2
+  year, month, day = commitDateStr.split('-')
+  assert all(c.isdigit() for c in list(year + month + day))
+  commitTimeDelta = datetime.now() - datetime(int(year), int(month), int(day))
+  return math.floor(commitTimeDelta.days / 365.25)
+
+def countModificationsForAuthor(baobab, hashSince, hashHead, author):
+  printStatusBanner('Fetching overall stats')
+  populateBaobab(baobab, hashHead, hashSince)
+
+  printStatusBanner('Fetching commits')
+  authorCommits = git('log', '--color=never', '--format=%cd,%H',
+                             '--date=short', '--author={0}'.format(author),
+                             '{0}..{1}'.format(hashSince, hashHead))
+  authorCommitDatesIds = list(filter(None, authorCommits.split('\n')))
+  if len(authorCommitDatesIds) == 0:
+    die('Error: author(s) have no commits')
+
+  printStatusBanner('Found {0} commits'.format(len(authorCommitDatesIds)))
+  for commitDateId in authorCommitDatesIds:
+    commitDate, commitId = commitDateId.split(",")
+    commitAge = ageInYears(commitDate)
+    printStatus('Counting changes', commitId)
+    stat = git('diff', '--color=never', '--numstat', '{0}^..{0}'.format(commitId))
+    if len(stat) == 0:
+      print('Empty commit: ' + commitId)
+      continue
+    statLines = stat.split('\n')
+    for s in statLines:
+      relname, lines = parseStatLine(s)
+      if lines > 0 and baobabInclude(relname):
+        record = findRecord(baobab, relname)
+        record['modified'] += lines
+        record['commits'] += [commitId]
+        record['weight'] += 1 / len(statLines)
+        record['age'] = min(record['age'], commitAge)
+
+### renderHtml() ###
+
+def indent(depth):
+  return depth * '  ' if (depth > 0) else ''
+
+def nodeAttributes(node):
+  filename = os.path.basename(node['name'])
+  return 'n: "{0}", t: {1}, m: {2}, c: {3}, w: {4}, a: {5}'.format(
+          filename, node['total'], node['modified'], len(set(node['commits'])),
+          node['weight'], node['age'])
+
+def writeChildNodes(node, outs, prefix, depth):
+  # Avoid goddamn trailling comma on last item
+  isBegin = True
+  for name, child in node['children'].items():
+    prefix = '\n' if isBegin else ',\n'
+    if writeNodeData(child, outs, prefix, depth + 1):
+      isBegin = False
+  outs.write('\n')
+
+def writeNodeData(node, outs, prefix='', depth=0):
+  if (node['modified'] == 0):
+    return False # skipped
+  else:
+    outs.write(prefix + indent(depth) + '{')
+    outs.write(nodeAttributes(node))
+    if node['children'].keys():
+      outs.write(', children: [')
+      writeChildNodes(node, outs, prefix, depth)
+      outs.write('{0}]'.format(indent(depth)))
+    outs.write('}')
+    return True
+
+def jsPreprocessor():
+  curlyOpen = re.compile(r'{')
+  curlyClose = re.compile(r'}')
+  customKeys = re.compile(r'\${{(.*?)}}')
+  def jspp(s):
+      s = curlyOpen.sub(r'{{', s)
+      s = curlyClose.sub(r'}}', s)
+      return customKeys.sub(r'{\1}', s)
+  return jspp
+
+headerHtml = """
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="{css}">
+  <title>git baobab-me {args}</title>
+</head>
+"""
+
+showCommitsOnGithubHtml = """
+<script>
+  function showOnGithub(d) {
+    const url = "https://${github_remote}/commits/${sha_head}/";
+    const relPath = concatPath(d).slice(${root_name_len} + 1); // account for slash
+    window.open(url + relPath + '?author=${author}', '_blank');
+  }
+
+  baobab.arcShapes
+    .filter(d => !d.children)
+    .style("cursor", "pointer")
+    .on("click", d => showOnGithub(d));
+</script>
+"""
+
+navigateOnLoadHtml = """
+<script>
+(function() {
+  var regex = /[?&]([^=#]+)=([^&#]*)/g,
+      url = window.location.href,
+      params = {},
+      match;
+  while(match = regex.exec(url)) {
+    params[match[1]] = match[2];
+  }
+
+  if (params["path"]) {
+    var path = params["path"].split("/");
+    var select = baobab.root;
+    for (var i = 1; i < path.length; i++) {
+      const child = select.children.find(node => node.data["n"] == path[i]);
+      if (child && child["children"])
+        select = child
+      else
+        break;
+    }
+    selectAsNewRoot(select);
+  }
+})();
+</script>
+"""
+
+# TODO: Add support for SSH remnotes
+parse_remote_github_http = re.compile(r'^.*\shttps://(github\.com/.*/.*).* \(fetch\)')
+def parseRemoteGithub():
+  remotes_string = git('remote', '-v')
+  remotes_lines = remotes_string.split('\n')
+  for s in remotes_lines:
+    res = parse_remote_github_http.search(s)
+    if not res is None:
+      url = res.group(1)
+      return url[:-4] if url.endswith('.git') else url
+  return ''
+
+def createOutputFile():
+  if args.o:
+    return io.open(args.o, 'w', encoding='utf8')
+  else:
+    return tempfile.NamedTemporaryFile(mode='w', encoding='utf8',
+                                       suffix='.html', delete=False)
+
+def renderHtml(baobab, hashSince, hashHead, author, ageMin, ageMax):
+  outs = createOutputFile()
+  print('Export chart to {0}'.format(outs.name))
+
+  commandLineArgs = ' '.join(sys.argv[1:])
+  outs.write(headerHtml.format(css=args.baobabcss, args=commandLineArgs))
+  outs.write('<body>\n')
+  outs.write('<svg id=\"baobab\"></svg>\n')
+
+  outs.write('<p>git baobab-me {0}</p>\n'.format(commandLineArgs))
+
+  outs.write('<script src="{0}"></script>\n'.format(args.d3js))
+  outs.write('<script>\n')
+  outs.write('const baobab_author = "{0}";\n'.format(author))
+  outs.write('const baobab_hash_since = "{0}";\n'.format(hashSince))
+  outs.write('const baobab_hash_head = "{0}";\n'.format(hashHead))
+  outs.write('const baobab_age_min = {0};\n'.format(max(0, ageMin)))
+  outs.write('const baobab_age_max = {0};\n'.format(min(1, ageMax)))
+  outs.write('const baobab_data = ')
+  writeNodeData(baobab, outs)
+  outs.write(';\n')
+  outs.write('</script>\n')
+  outs.write('<script src="{0}"></script>\n'.format(args.baobabjs))
+
+  jspp = jsPreprocessor()
+  githubUrl = parseRemoteGithub()
+  if githubUrl:
+    outs.write(jspp(showCommitsOnGithubHtml).format(
+      github_remote=githubUrl, sha_head=hashHead, author=args.author,
+      root_name_len=len(baobab['name'])
+    ))
+
+  outs.write(navigateOnLoadHtml)
+  outs.write('</body>\n')
+  outs.close()
+  return outs.name
+
+
+def findAuthorFirstCommit(author):
+  printStatusBanner('Finding first commit')
+  all = git('log', '--reverse', '--color=never', '--format=%cd,%H',
+                   '--date=short', '--author={0}'.format(author))
+  if len(all) == 0:
+    die('Error: author has no commits')
+  firstLine = all.split('\n')[0]
+  firstDate, firstId = firstLine.split(',')
+  print('First commit was on {0}: {1}'.format(firstDate, firstId))
+  return firstId
+
+### main() ###
+
+def sumUp(node):
+  if not node['children'].keys():
+    # Zero total == file was created AND deleted during period of interest
+    ratio = node['modified'] / node['total'] if node['total'] > 0 else 0
+    return ratio, ratio
+  # In directories, accumulate nested entries
+  age_min = 100
+  age_max = 0
+  assert node['modified'] == 0
+  if node['total'] != 0:
+    print("Warning: ignoring stat line for directory", node['name'])
+    node['total'] = 0
+  for name, child in node['children'].items():
+    child_age_min, child_age_max = sumUp(child)
+    age_min = min(age_min, child_age_min)
+    age_max = max(age_max, child_age_max)
+    node['total'] += child['total']
+    node['modified'] += child['modified']
+    node['commits'] += child['commits']
+    node['age'] = min(node['age'], child['age'])
+  return age_min, age_max
+
+if __name__ == '__main__':
+  if args.b:
+    print('Batch mode:\n{0}'.format(' '.join(sys.argv)))
+
+  absname = git('rev-parse', '--show-toplevel')
+  if absname != os.getcwd():
+    die('Error: working directory is not the repository root')
+
+  if args.since is None:
+    args.since = findAuthorFirstCommit(args.author)
+  hashSince = git('rev-parse', args.since)
+  if not hashSince.startswith(args.since):
+    die('Error: cannot find commit {0}'.format(args.since))
+
+  hashHead = git('rev-parse', 'HEAD')
+  print('Analyzing commit range {0}..{1}'.format(hashSince[:12], hashHead[:12]))
+
+  baobab = createRecord('.')
+  countModificationsForAuthor(baobab, hashSince, hashHead, args.author)
+  age_min, age_max = sumUp(baobab)
+
+  print('Authored {0} commits with a total of {1} line changes'.format(
+        len(list(set(baobab['commits']))), baobab['modified']))
+
+  baobab['name'] = absname[absname.rindex(os.sep)+1:]
+  htmlFileName = renderHtml(baobab, hashSince, hashHead, args.author, age_min, age_max)
+  if not args.b:
+    if input('Show in browser? [Y/n] ') != 'n':
+      webbrowser.open('file://' + htmlFileName)
