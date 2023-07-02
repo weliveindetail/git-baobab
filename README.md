@@ -11,7 +11,7 @@ It's not automated yet..
 > PAGES=`pwd`
 > MASTER=$PAGES/../git-baobab
 
-# Generate versioned artifacts
+# Generate git-baobab versioned artifacts
 > cp $MASTER/baobab-static.css baobab-static.v$VERSION.css
 > cp $MASTER/baobab-static.js baobab-static.v$VERSION.js
 > babel-minify --removeConsole -o baobab-static.v$VERSION.min.js baobab-static.v$VERSION.js
@@ -26,4 +26,9 @@ It's not automated yet..
 > cd /path/to/ableton-link
 > git checkout dc6dc2e28491
 > $MASTER/git-baobab ae144929434a -b -o $PAGES/examples/ableton-link-since3.html $ARTIFACTS
+
+# Generate git-baobab-me versioned artifacts
+> cp $MASTER/baobab-me-static.css baobab-me-static.v$VERSION.css
+> cp $MASTER/baobab-me-static.js baobab-me-static.v$VERSION.js
+> babel-minify --removeConsole -o baobab-me-static.v$VERSION.min.js baobab-me-static.v$VERSION.js
 ```
