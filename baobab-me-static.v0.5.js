@@ -10,6 +10,23 @@ if (!String.prototype.format) {
   };
 }
 
+function parseUrlParamFloat(name, min, max, default_value) {
+  var regex = /[?&]([^=#]+)=([^&#]*)/g,
+      url = window.location.href,
+      params = {},
+      match;
+  while(match = regex.exec(url)) {
+    params[match[1]] = match[2];
+  }
+
+  if (params[name]) {
+    var val = parseFloat(params[name]);
+    return Math.min(max, Math.max(min, val));
+  }
+
+  return default_value;
+}
+
 function parseUrlParamAnyBool(name, default_value=true) {
   var regex = /[?&]([^=#]+)=([^&#]*)/g,
       url = window.location.href,
@@ -54,7 +71,7 @@ const baobab = {};
 baobab.strokeWidth = viewBox.radius / 750;
 baobab.globalFontSizeMax = viewBox.radius / 10;
 baobab.globalFontSizeMin = viewBox.radius / 50;
-baobab.showCommitAge = parseUrlParamAnyBool('showCommitAge');
+baobab.showCommitAge = parseUrlParamFloat('showCommitAge', 0, 1, 0.5);
 
 function concatPath(d) {
   var path = d.data.n;
@@ -114,12 +131,13 @@ const hotColdColorsRGB = [
   { R: 0xf4, G: 0x6d, B: 0x43 },
 ];
 
-function greyOutByAge(col, age) {
+function greyOutByAge(col, age, factor) {
   // Since we never want to go full grey, we normalize with: max + 2
   console.assert(age >= baobab_age_min, "Commit age exceeds minimal age");
   console.assert(age <= baobab_age_max, "Commit age exceeds maximal age");
   const norm = (age - baobab_age_min) / (baobab_age_max + 2 - baobab_age_min);
-  return 0xbb * norm + col * (1 - norm);
+  const effective = norm * factor;
+  return 0xbb * effective + col * (1 - effective);
 }
 
 function colorHotColdDarkBright(d) {
@@ -130,8 +148,8 @@ function colorHotColdDarkBright(d) {
   const scaled = Math.min(0.999, Math.sqrt(ratio));
   const idx = Math.floor(scaled * 5);
   const col = hotColdColorsRGB[idx];
-  const fn = baobab.showCommitAge ? c => dec2hex(greyOutByAge(c, d.data.a))
-                                  : c => dec2hex(c);
+  const factor = baobab.showCommitAge;
+  const fn = c => dec2hex(greyOutByAge(c, d.data.a, factor));
   return '#{0}{1}{2}'.format(fn(col.R), fn(col.G), fn(col.B));
 }
 
