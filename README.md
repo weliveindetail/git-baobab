@@ -1,25 +1,50 @@
-# git-baobab
-
-In admiration of the [Baobab](https://en.wikipedia.org/wiki/Baobab_tree), the African tree of life: git-baobab visualizes life in a git repository as a sunburst-style hot-cold map, similar to [Disk Usage Analyzer](https://en.wikipedia.org/wiki/Disk_Usage_Analyzer).<br>
-
-## Setup
+In admiration of the [Baobab](https://en.wikipedia.org/wiki/Baobab_tree), the African tree of life: the baobab scripts visualize life in a git repository as a sunburst-style hot-cold map, similar to [Disk Usage Analyzer](https://en.wikipedia.org/wiki/Disk_Usage_Analyzer).<br>
 
 ```
-$ git clone https://github.com/weliveindetail/git-baobab.git /path/to/git-baobab
-$ ln -s /path/to/git-baobab/git-baobab /usr/local/bin/git-baobab
+➜ git clone https://github.com/weliveindetail/git-baobab.git /path/to/git-baobab
+➜ ll /path/to/git-baobab/git-baobab*
+-rwxr-xr-x  1 user  staff    19K Jul  2 13:11 git-baobab
+-rwxr-xr-x  1 user  staff    20K Jul  2 14:14 git-baobab-me
 ```
+
+They can run standalone or as a dedicated sub-command within git. For that just copy or symlink them somewhere in your PATH.
+
+## git-baobab
+
+Shows accumulated changes in a git repository between current `HEAD` and the given `since` revision.
+
+```
+➜ ln -s /path/to/git-baobab/git-baobab /usr/local/bin/git-baobab
+➜ git baobab -h
+usage: git-baobab-me [...] since
+```
+
+## git-baobab-me
+
+Shows accumulated changes in a git repository for the given `author` until the current `HEAD` revision. Leaf nodes link to the list of individual commits on GitHub. It requires `author` to be given by their e-mail address and the remote `origin` to point to a GitHub repository.
+
+```
+➜ ln -s /path/to/git-baobab/git-baobab-me /usr/local/bin/git-baobab-me
+➜ git baobab-me -h
+usage: git-baobab-me [...] author
+```
+
+
+
+
+
 
 ## Example
 
 ```
-$ git clone https://github.com/llvm/llvm-project.git
-$ cd llvm-project
-$ git log -1 --oneline 2cf681a11aea
+➜ git clone https://github.com/llvm/llvm-project.git
+➜ cd llvm-project
+➜ git log -1 --oneline 2cf681a11aea
 2cf681a11ae Creating release_90 branch off revision 366426
-$ git checkout 2cf681a11aea
-$ git merge-base HEAD origin/release/8.x
+➜ git checkout 2cf681a11aea
+➜ git merge-base HEAD origin/release/8.x
 7b5565418f4d6e113ba805dad40d471d23bca6f6
-$ git baobab 7b5565418f4d --cpp -exclude "/(test|unittest|unittests)/"
+➜ git baobab 7b5565418f4d --cpp -exclude "/(test|unittest|unittests)/"
 Commits 7b5565418f4d..2cf681a11aea
 Filter matches 11896 tracked files
 4879337 lines today, 647882 insertions / deletions
