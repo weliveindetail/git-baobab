@@ -576,7 +576,7 @@ if __name__ == '__main__':
   if args.b:
     print('Batch mode:\n{0}'.format(' '.join(sys.argv)))
 
-  absname = git('rev-parse', '--show-toplevel')
+  absname = os.path.normpath(git('rev-parse', '--show-toplevel'))
   if absname != os.getcwd():
     die('Error: working directory is not the repository root')
 
